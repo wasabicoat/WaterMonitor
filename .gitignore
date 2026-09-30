@@ -1,0 +1,10 @@
+# System and OS files
+.DS_Store
+.smbdelete*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# Cache directory (ignore cached images, JSON responses, locks)
+cache/*
+!cache/.gitkeep
