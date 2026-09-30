@@ -35,10 +35,9 @@ Existing files: `index.php` (single-page UI), `api/pakkret.php` (reference imple
 ---------------------------------------------------------------------------------------------------------
 ## §2 Backend: new file `api/nonthaburi.php`
 
-Copy these helpers from `api/pakkret.php` verbatim-in-spirit (rename nothing that would collide — this is a
-separate script, so copying is fine): `cache_dir()`, `fetch_url($url)` (curl, fallback file_get_contents,
-UA `Mozilla/5.0 (WaterMonitor)`, NO `CURLOPT_ENCODING`), `to_json()`, `$FETCH_LOG`, `ini_set('display_errors', debug?1:0)`,
-`date_default_timezone_set('Asia/Bangkok')`.
+> **Status (2026-09-30):** implemented. Shared helpers now live in `api/lib.php` (`cache_dir()`, `fetch_url($url, $timeout)`,
+> `to_json()`, `send_json()`, `$DEBUG`, `$FETCH_LOG`); `api/nonthaburi.php` requires it. §2.2 below describes the
+> CURRENT image pipeline (revised twice: slow upstream → background refresher; bandwidth → thumbnails + versioned URLs).
 
 Constants:
 ```
@@ -47,6 +46,10 @@ SRC_IMAGE    = 'http://182.52.224.70/MilestoneImageService/ImageService.svc/Imag
 TTL_STATIONS = 60      // seconds
 TTL_IMAGE    = 60
 ONLINE_MAX_AGE = 7200  // station counts as online if `date` within 2h of now
+REFRESH_PARALLEL = 4   // concurrent upstream snapshot requests (upstream takes 10-40 s per image)
+REFRESH_BUDGET   = 55  // seconds one refresher may run
+IMG_TIMEOUT      = 40  // seconds per snapshot
+FAIL_BACKOFF     = 180 // seconds before retrying a camera whose last fetch failed
 ```
 
 ### §2.1 `GET api/nonthaburi.php` → station JSON
@@ -64,7 +67,8 @@ Algorithm:
      "lat": float|null, "lng": float|null,
      "date": string,                         // as upstream
      "online": bool,                         // strtotime(date) >= time() - ONLINE_MAX_AGE
-     "cams": [ {"name": <cameraname>, "url": "api/nonthaburi.php?cam=" . rawurlencode(<cameraname>)} ],
+     "cams": [ {"name": <cameraname>, "url": "api/nonthaburi.php?cam=" . rawurlencode(<cameraname>),
+                "v": int} ],                  // v = mtime of the cached snapshot (0 = not cached yet)
      "wl_up":   null | {"now":float,"warning":float,"danger":float,"status":string,"trend":"up"|"down"|"flat"},
      "wl_down": null | same shape,
      "rf":      null | {"now":float,"day":float,"status":string}
@@ -76,21 +80,32 @@ Algorithm:
    * floats via `(float)`; null-safe.
 3. Response 200: `{"fetched_at": ISO8601, "stale": bool, "stations": [...]}` with headers
    `Content-Type: application/json; charset=utf-8`, `Cache-Control: no-cache`.
+4. After the response is sent (`fastcgi_finish_request`), if any snapshot is older than TTL_IMAGE → run the
+   background refresher (§2.2). Pages request this JSON every minute, so this is what keeps snapshots fresh
+   (browsers no longer re-request unchanged images).
 
-### §2.2 `GET api/nonthaburi.php?cam=<name>[&w=400|800]` → JPEG proxy
+### §2.2 `GET api/nonthaburi.php?cam=<name>[&w=480][&v=<mtime>]` → JPEG proxy
 
-1. Always width=800,height=450 (upstream returns a blue placeholder for other sizes); `w` ignored.
-2. **Whitelist (security, mandatory):** load the station list the same way as §2.1 step 1 (cache OK); collect all
+1. **Whitelist (security, mandatory):** load the station list the same way as §2.1 step 1 (cache OK); collect all
    camera names; if `$_GET['cam']` is not exactly one of them → HTTP 404, empty body. Never fetch arbitrary names/URLs.
-3. Cache file: `<cache_dir>/cam_<md5(name|w)>.jpg`. If exists and age < TTL_IMAGE → serve it.
-4. Else fetch `SRC_IMAGE . '?width='.$w.'&height='.$h.'&cameraname='.rawurlencode($name)` (timeout 15 s).
-   Accept only if body length > 1000 and starts with `"\xFF\xD8"`; then write cache and serve.
-5. On failure: serve stale cache file if any; else HTTP 502, empty body.
-6. Serve with `Content-Type: image/jpeg`, `Cache-Control: public, max-age=30`, `readfile()` or echo.
-7. If no writable cache dir: fetch and echo directly (no caching).
+2. Upstream is always requested at width=800,height=450 — Milestone returns a blue "no image" placeholder for
+   other sizes. Cache file: `<cache_dir>/cam_<md5(name|800)>.jpg`.
+3. If the cache file exists: serve it immediately (`&w=480` → 480 px thumbnail made with GD, cached as
+   `cam_<md5>_480.jpg`, regenerated when the 800 px file is newer; no GD → full image).
+   Headers: `&v=` equal to the file's mtime → `Cache-Control: public, max-age=31536000, immutable` (versioned URL);
+   otherwise `public, max-age=30`. If the file is older than TTL_IMAGE, continue with step 5 after the response.
+4. No cache yet: send a tiny 16:9 SVG "กำลังโหลดภาพ…" (`Cache-Control: no-store`); the page retries it.
+   (Without php-fpm: fetch this one camera synchronously instead.)
+5. **Background refresher** (`refresh_cams`, after `fastcgi_finish_request`): only one runs at a time (non-blocking
+   `flock` on `cam_refresh.lock`); queue = stale/missing cameras, oldest first, skipping cameras with a `.fail` marker
+   younger than FAIL_BACKOFF; fetch REFRESH_PARALLEL at a time with `curl_multi` until REFRESH_BUDGET.
+   Success (HTTP 200, JPEG, > 1000 bytes) → save and remove `.fail`; failure → touch `<file>.fail`.
+   Save rule: if both the new and the cached image are the blue offline placeholder (GD check: ≥80% pure-blue sample
+   pixels below the text rows), keep the old file so its mtime (= version) does not change.
+6. No writable cache dir: fetch and echo directly (no caching).
 
 ### §2.3 `GET api/nonthaburi.php?debug=1` → text/plain diagnostics
-Print: PHP version, curl yes/NO, cache dir, fetch log for the station URL (method, http, bytes, error, elapsed),
+Print: PHP version, curl yes/NO, php-fpm yes/no, GD yes/NO, cache dir, fetch log for the station URL (method, http, bytes, error, elapsed),
 counts: stations, stations online, cameras. Then fetch ONE camera image (first camera) and print http/bytes/jpeg-ok.
 End with `RESULT: OK` or `RESULT: FAIL`.
 
@@ -145,17 +160,19 @@ Add `html { scroll-behavior:smooth; scroll-padding-top:56px; }`.
 </section>
 ```
 * One tile per camera of every station with `cams.length > 0`, in upstream order.
-  Tile markup: `<figure class="cam" data-zone data-text="<code> <name>">` containing `<img alt loading="lazy" data-src="<cam.url>&w=400">`
+  Tile markup: `<figure class="cam" data-zone data-text="<code> <name>">` containing `<img alt loading="lazy" data-src="<cam.url>&w=480&v=<cam.v>">`
+  (revised: versioned thumbnail URL; after each JSON refresh `nbSyncVersions` swaps `data-src` for cameras whose `v`
+  changed and reloads only those that are on screen; placeholder SVG (naturalWidth < 100) is retried with `&r=`)
   and `<figcaption>` = `<code> <name>` + (` · Cam<i+1>` if station has >1 cam) + a status dot for the station's worst status (§3.6).
-* Images load only when visible: IntersectionObserver (rootMargin `200px`) sets `img.src = data-src + '&t=' + Date.now()`.
-  Every 60 s, re-set `src` (new `t`) for tiles currently intersecting. Fallback if no IntersectionObserver: set src immediately.
+* Images load only when visible: IntersectionObserver (rootMargin `200px`) sets `img.src = data-src` (versioned URL, so the
+  browser cache serves unchanged snapshots). Fallback if no IntersectionObserver: set src immediately.
 * `img.onerror` → add class `err` to figure; CSS shows "ภาพไม่พร้อมใช้งาน" text (via `figure.cam.err::after`) and hides img.
 * Zone buttons + search filter tiles by toggling `hidden` (search: case-insensitive substring on `data-text`).
 * Grid CSS: `display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(220px,1fr))`; at ≤600px
   `minmax(150px,1fr)`. Image box `aspect-ratio:16/9; object-fit:cover; background:#000; border-radius:8px; width:100%`.
   Caption `font-size:.85rem`, ellipsis on one line.
 * Click tile → lightbox: fixed full-screen overlay (`rgba(0,0,0,.85)`, z-index 50) with the 800px image
-  (`cam.url + '&w=800&t=' + Date.now()`), caption, the station's readings line (§3.6 format), and a close button (×).
+  (full 800 px: `cam.url + '&v=' + cam.v`), caption, the station's readings line (§3.6 format), and a close button (×).
   Close on ×, backdrop click, or Esc. `<body>` scroll locked while open (`overflow:hidden`).
 * `#nbCamCount` text: `(<N> กล้อง)`.
 

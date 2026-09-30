@@ -23,7 +23,8 @@ define('SRC_IMAGE',    'http://182.52.224.70/MilestoneImageService/ImageService.
 define('TTL_STATIONS', 60);       // seconds
 define('TTL_IMAGE',    60);       // seconds
 define('ONLINE_MAX_AGE', 7200);   // station counts as online if `date` within 2h of now
-define('REFRESH_PARALLEL', 6);    // concurrent upstream snapshot requests
+define('REFRESH_PARALLEL', 4);    // concurrent upstream snapshot requests (their server is slow; be gentle)
+define('FAIL_BACKOFF', 180);     // seconds before retrying a camera whose last fetch failed
 define('REFRESH_BUDGET', 55);     // seconds a refresher may run
 define('IMG_TIMEOUT', 40);        // seconds per snapshot
 
@@ -93,7 +94,12 @@ function normalize_station($s) {
         foreach ($s['cctv'] as $u) {
             $name = cam_name($u);
             if ($name === null) continue;
-            $cams[] = array('name' => $name, 'url' => 'api/nonthaburi.php?cam=' . rawurlencode($name));
+            $f = $GLOBALS['dir'] ? cam_file($GLOBALS['dir'], $name) : null;
+            $cams[] = array(
+                'name' => $name,
+                'url'  => 'api/nonthaburi.php?cam=' . rawurlencode($name),
+                'v'    => ($f && is_file($f)) ? filemtime($f) : 0,   // version: changes only when the snapshot changes
+            );
         }
     }
 
@@ -147,6 +153,56 @@ function is_jpeg($b) {
 }
 
 /**
+ * True if the JPEG is Milestone's blue "no image" frame (camera offline). Needs GD; without it: false.
+ * Its timestamp text changes every fetch, so byte comparison can't tell two placeholders apart.
+ */
+function is_placeholder($b) {
+    if (!function_exists('imagecreatefromstring')) return false;
+    $im = @imagecreatefromstring($b);
+    if (!$im) return false;
+    $w = imagesx($im); $h = imagesy($im); $blue = 0; $n = 0;
+    for ($y = (int)($h * 0.3); $y < $h; $y += (int)max(1, $h / 8)) {        // skip the text rows at the top
+        for ($x = 0; $x < $w; $x += (int)max(1, $w / 8)) {
+            $c = imagecolorat($im, $x, $y);
+            $r = ($c >> 16) & 255; $g = ($c >> 8) & 255; $bl = $c & 255;
+            $n++; if ($bl > 200 && $r < 40 && $g < 40) $blue++;
+        }
+    }
+    imagedestroy($im);
+    return $n > 0 && $blue / $n > 0.8;
+}
+
+/** Save a fresh snapshot unless both it and the cached one are the offline placeholder (keeps its version). */
+function save_snapshot($f, $b) {
+    if (is_file($f) && is_placeholder($b) && is_placeholder(file_get_contents($f))) return;
+    @file_put_contents($f, $b, LOCK_EX);
+}
+
+/** 480px-wide thumbnail of a cached snapshot (GD), regenerated when the snapshot is newer. Falls back to the original. */
+function cam_thumb($f) {
+    if (!function_exists('imagecreatefromjpeg') || !is_file($f)) return $f;
+    $t = substr($f, 0, -4) . '_480.jpg';
+    if (is_file($t) && filemtime($t) >= filemtime($f)) return $t;
+    $im = @imagecreatefromjpeg($f);
+    if (!$im) return $f;
+    $w = 480; $h = (int)round(imagesy($im) * $w / imagesx($im));
+    $th = imagecreatetruecolor($w, $h);
+    imagecopyresampled($th, $im, 0, 0, 0, 0, $w, $h, imagesx($im), imagesy($im));
+    $ok = @imagejpeg($th, $t . '.tmp', 70) && @rename($t . '.tmp', $t);
+    imagedestroy($im); imagedestroy($th);
+    if (!$ok) return $f;
+    @touch($t, filemtime($f));
+    return $t;
+}
+
+/** Record a refresh attempt: save the snapshot on success, or leave a .fail marker for back-off. */
+function mark_result($f, $b) {
+    if ($b === null) { @touch("$f.fail"); return; }
+    @unlink("$f.fail");
+    save_snapshot($f, $b);
+}
+
+/**
  * Refresh stale/missing snapshots, oldest first, REFRESH_PARALLEL at a time, within REFRESH_BUDGET.
  * Only one refresher runs at a time across all PHP workers (non-blocking flock).
  */
@@ -158,6 +214,8 @@ function refresh_cams($dir, $names) {
     foreach ($names as $n) {
         $f = cam_file($dir, $n);
         $age = is_file($f) ? time() - filemtime($f) : PHP_INT_MAX;
+        // A camera that just failed would stay "oldest" and block a slot every cycle: back off
+        if (is_file("$f.fail") && time() - filemtime("$f.fail") < FAIL_BACKOFF) continue;
         if ($age >= TTL_IMAGE) $queue[$n] = $age;
     }
     arsort($queue);                     // missing / oldest first
@@ -168,7 +226,7 @@ function refresh_cams($dir, $names) {
         foreach ($queue as $n) {
             if (time() > $deadline) break;
             $b = fetch_url(cam_src($n), IMG_TIMEOUT);
-            if (is_jpeg($b)) @file_put_contents(cam_file($dir, $n), $b, LOCK_EX);
+            mark_result(cam_file($dir, $n), is_jpeg($b) ? $b : null);
         }
     } else {
         $mh = curl_multi_init();
@@ -195,9 +253,8 @@ function refresh_cams($dir, $names) {
                 $ch = $info['handle'];
                 list(, $n) = $active[(int)$ch];
                 $b = curl_multi_getcontent($ch);
-                if ($info['result'] === CURLE_OK && curl_getinfo($ch, CURLINFO_HTTP_CODE) === 200 && is_jpeg($b)) {
-                    @file_put_contents(cam_file($dir, $n), $b, LOCK_EX);
-                }
+                $ok = $info['result'] === CURLE_OK && curl_getinfo($ch, CURLINFO_HTTP_CODE) === 200 && is_jpeg($b);
+                mark_result(cam_file($dir, $n), $ok ? $b : null);
                 curl_multi_remove_handle($mh, $ch);
                 curl_close($ch);
                 unset($active[(int)$ch]);
@@ -233,7 +290,8 @@ if ($DEBUG) {
     header('Content-Type: text/plain; charset=utf-8');
     echo "WaterMonitor (Nonthaburi) diagnostics\n=====================================\n";
     echo 'PHP ' . PHP_VERSION . ' · cURL ' . (function_exists('curl_init') ? 'yes' : 'NO')
-       . ' · php-fpm ' . (function_exists('fastcgi_finish_request') ? 'yes' : 'no (images fetched synchronously)') . "\n";
+       . ' · php-fpm ' . (function_exists('fastcgi_finish_request') ? 'yes' : 'no (images fetched synchronously)')
+       . ' · GD ' . (function_exists('imagecreatefromjpeg') ? 'yes (480px thumbnails)' : 'NO (full-size images; enable the gd extension to save bandwidth)') . "\n";
     echo 'Cache folder: ' . ($dir ? $dir : 'NONE writable') . "\n\n";
 
     @unlink($dir ? "$dir/nonthaburi_raw.json" : '');   // force a live fetch
@@ -280,16 +338,19 @@ if (isset($_GET['cam'])) {
     $f = cam_file($dir, $name);
     $fresh = is_file($f) && time() - filemtime($f) < TTL_IMAGE;
     if (is_file($f)) {
+        $out = (isset($_GET['w']) && $_GET['w'] === '480') ? cam_thumb($f) : $f;
         header('Content-Type: image/jpeg');
-        header('Cache-Control: public, max-age=30');
-        header('Content-Length: ' . filesize($f));
-        readfile($f);
+        // ?v=<mtime> is a versioned URL: its content never changes, so browsers may keep it forever
+        $versioned = isset($_GET['v']) && (string)$_GET['v'] === (string)filemtime($f);
+        header($versioned ? 'Cache-Control: public, max-age=31536000, immutable' : 'Cache-Control: public, max-age=30');
+        header('Content-Length: ' . filesize($out));
+        readfile($out);
         if ($fresh) exit;
     } elseif (!function_exists('fastcgi_finish_request')) {
         // Dev server without php-fpm: fetch this one camera synchronously
         $b = fetch_url(cam_src($name), IMG_TIMEOUT);
         if (!is_jpeg($b)) { http_response_code(502); exit; }
-        @file_put_contents($f, $b, LOCK_EX);
+        save_snapshot($f, $b);
         header('Content-Type: image/jpeg');
         header('Cache-Control: public, max-age=30');
         echo $b;
@@ -311,4 +372,16 @@ if ($stations === false) {
 }
 $out = array();
 foreach ($stations as $s) $out[] = normalize_station($s);
-send_json(array('fetched_at' => date('c'), 'stale' => $stale, 'stations' => $out));
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-cache');
+echo to_json(array('fetched_at' => date('c'), 'stale' => $stale, 'stations' => $out));
+
+// Browsers now cache unchanged snapshots, so image requests no longer tell us when to refresh.
+// Every page asks for this JSON once a minute: refresh stale snapshots from here (single refresher via flock).
+if ($dir && finish_response()) {
+    $names = all_cam_names($stations);
+    foreach ($names as $n) {
+        $f = cam_file($dir, $n);
+        if (!is_file($f) || time() - filemtime($f) >= TTL_IMAGE) { refresh_cams($dir, $names); break; }
+    }
+}

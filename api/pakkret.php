@@ -219,7 +219,11 @@ if ($data === null && !isset($_GET['img'])) {
         list($data, $jpg) = $res;
         if ($cacheJson) {
             @file_put_contents($cacheJson, to_json($data), LOCK_EX);
-            if ($jpg !== null) @file_put_contents($cacheImg, $jpg, LOCK_EX);
+            // Rewrite only when the snapshot really changed: its mtime is the image_url version,
+            // so an unchanged mtime means browsers keep the image instead of re-downloading 120+ KB.
+            if ($jpg !== null && (!is_file($cacheImg) || md5_file($cacheImg) !== md5($jpg))) {
+                @file_put_contents($cacheImg, $jpg, LOCK_EX);
+            }
         }
     } elseif ($cacheJson && is_file($cacheJson)) {   // upstream down: serve last good copy
         $data  = json_decode(file_get_contents($cacheJson), true);
@@ -230,7 +234,8 @@ if ($data === null && !isset($_GET['img'])) {
 if (isset($_GET['img'])) {
     if (!$cacheImg || !is_file($cacheImg)) { http_response_code(404); exit; }
     header('Content-Type: image/jpeg');
-    header('Cache-Control: no-cache');
+    // Versioned URL (?t=mtime) never changes content, so let browsers cache it
+    header(isset($_GET['t']) ? 'Cache-Control: public, max-age=86400' : 'Cache-Control: no-cache');
     readfile($cacheImg);
     exit;
 }

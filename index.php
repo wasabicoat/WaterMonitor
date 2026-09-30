@@ -29,6 +29,11 @@ header { padding: 20px 16px 8px; max-width: 1280px; margin: 0 auto; display: fle
 h1 { margin: 0; font-size: 1.6rem; }
 header p { margin: 2px 0 0; color: var(--muted); }
 #clock { font-variant-numeric: tabular-nums; color: var(--muted); }
+.hdr-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.viewers { font-size: .9rem; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.viewers::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
+.viewers b { color: var(--text); font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) { .hdr-right { align-items: flex-start; } }
 main { max-width: 1280px; margin: 0 auto; padding: 8px 16px 32px; display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
 @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
@@ -151,7 +156,10 @@ ul.linklist small { display: block; color: var(--muted); }
     <h1>🌊 เฝ้าระวังระดับน้ำ แม่น้ำเจ้าพระยา</h1>
     <p>ท่าน้ำนนทบุรี · ท่าน้ำปากเกร็ด · ท่าน้ำปทุมธานี · ท่าน้ำท่าอิฐ · สถานีวัดน้ำนนทบุรี</p>
   </div>
-  <div id="clock"></div>
+  <div class="hdr-right">
+    <span class="viewers" id="viewers" hidden title="จำนวนผู้ที่เปิดหน้านี้อยู่ในขณะนี้">กำลังดู <b id="viewersN">–</b> คน</span>
+    <div id="clock"></div>
+  </div>
 </header>
 
 <nav class="secnav"><div class="inner">
@@ -374,6 +382,29 @@ function every(ms, fn) {
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   tasks.forEach(t => { if (Date.now() - t.last >= t.ms) { t.last = Date.now(); t.fn(); } });
+});
+
+// ---------- live viewer counter ----------
+// Random per-tab id (sessionStorage: a reload keeps it, a new tab gets its own). Ping every 30 s while
+// the tab is visible; hidden tabs stop pinging and drop out of the count within ~70 s.
+const viewerId = (() => {
+  try {
+    let v = sessionStorage.getItem('wm-viewer');
+    if (!v) { v = Math.random().toString(36).slice(2, 12) + Date.now().toString(36); sessionStorage.setItem('wm-viewer', v); }
+    return v;
+  } catch (_) { return Math.random().toString(36).slice(2, 12) + Date.now().toString(36); }
+})();
+async function pingViewers() {
+  try {
+    const r = await fetch('api/viewers.php?id=' + viewerId, { cache: 'no-store' });
+    const d = await r.json();
+    if (d.online != null) { $('viewersN').textContent = d.online.toLocaleString('th-TH'); $('viewers').hidden = false; }
+  } catch (_) { /* counter is optional; ignore */ }
+}
+pingViewers();
+every(30000, pingViewers);
+window.addEventListener('pagehide', () => {   // closing/leaving the page: drop out of the count right away
+  if (navigator.sendBeacon) navigator.sendBeacon('api/viewers.php?id=' + viewerId + '&leave=1');
 });
 
 // ---------- clock ----------
@@ -599,10 +630,29 @@ function nbCamSetKey(stations) {
   return stations.map(s => (s.cams || []).map(c => c.name).join(',')).join('|');
 }
 
-function nbLoadImg(img) {
+// data-src is a versioned URL (&v = snapshot mtime): the browser caches it, so an image is downloaded
+// again only when the server has a new snapshot. `bust` forces a re-request (used for the placeholder).
+function nbLoadImg(img, bust) {
   const ds = img.getAttribute('data-src');
   if (!ds) return;
-  img.src = ds + '&t=' + Date.now();
+  const src = bust ? ds + '&r=' + Date.now() : ds;
+  if (img.getAttribute('src') !== src) img.src = src;
+}
+function nbThumbSrc(cam) { return cam.url + '&w=480&v=' + (cam.v || 0); }
+
+// After each station refresh: point tiles at their new snapshot versions; reload only changed, visible ones
+function nbSyncVersions(stations) {
+  let k = 0;
+  [...$('nbGrid').querySelectorAll('figure.cam')].forEach(fig => {
+    const st = stations.find(s => s.code === fig.dataset.code);
+    const cam = st && st.cams && st.cams[Number(fig.dataset.cam)];
+    const img = fig.querySelector('img');
+    if (!cam || !img) return;
+    const ds = nbThumbSrc(cam);
+    if (img.getAttribute('data-src') === ds) return;
+    img.setAttribute('data-src', ds);
+    if (nbVisible.has(img) || !nbObserver) setTimeout(() => nbLoadImg(img), (k++) * 300);   // staggered
+  });
 }
 
 function nbSetupObserver() {
@@ -621,8 +671,6 @@ function nbSetupObserver() {
   }, { rootMargin: '200px' });
   imgs.forEach(img => nbObserver.observe(img));
 }
-// Refresh visible tiles one by one (not all 36 at once) to keep scrolling smooth
-every(60000, () => { [...nbVisible].forEach((img, i) => setTimeout(() => nbLoadImg(img), i * 300)); });
 
 function nbApplyFilter() {
   const q = $('nbSearch').value.trim().toLowerCase();
@@ -668,7 +716,7 @@ function openLightbox(src, captionHtml, readingsText, alt) {
 function nbOpenLightbox(st, cam, idx) {
   const cams = st.cams || [];
   const capHtml = '<code>' + esc(st.code) + '</code> ' + esc(st.name) + (cams.length > 1 ? ' · Cam' + (idx + 1) : '');
-  openLightbox(cam.url + '&t=' + Date.now(), capHtml, nbReadingsLine(st), st.code + ' ' + st.name);
+  openLightbox(cam.url + '&v=' + (cam.v || 0), capHtml, nbReadingsLine(st), st.code + ' ' + st.name);
 }
 
 function nbBuildGrid(stations) {
@@ -686,7 +734,7 @@ function nbBuildGrid(stations) {
       const suffix = cams.length > 1 ? ' · Cam' + (i + 1) : '';
       parts.push(
         '<figure class="cam" data-zone="' + esc(st.zone || '') + '" data-text="' + esc((st.code + ' ' + st.name).toLowerCase()) + '" data-code="' + esc(st.code) + '" data-cam="' + i + '">' +
-          '<img alt="' + plainLabel + '" loading="lazy" decoding="async" data-src="' + cam.url + '">' +
+          '<img alt="' + plainLabel + '" loading="lazy" decoding="async" data-src="' + nbThumbSrc(cam) + '">' +
           '<figcaption><span class="dot" style="background:' + dotColor + '"></span>' + capLabel + suffix + '</figcaption>' +
         '</figure>'
       );
@@ -700,7 +748,7 @@ function nbBuildGrid(stations) {
     img.onload = () => {
       fig.classList.remove('err');
       // Tiny SVG placeholder = snapshot not cached yet (server is fetching it): retry soon
-      if (img.naturalWidth < 100) setTimeout(() => { if (nbVisible.has(img) || !nbObserver) nbLoadImg(img); }, 8000);
+      if (img.naturalWidth < 100) setTimeout(() => { if (nbVisible.has(img) || !nbObserver) nbLoadImg(img, true); }, 8000);
     };
     fig.addEventListener('click', () => {
       const code = fig.dataset.code, idx = Number(fig.dataset.cam);
@@ -762,6 +810,8 @@ async function loadNonthaburi() {
     if (nbCamKey === null || key !== nbCamKey) {
       nbCamKey = key;
       nbBuildGrid(stations);
+    } else {
+      nbSyncVersions(stations);
     }
     nbRenderTable(stations);
     $('nbMsg').textContent = d.stale ? 'ข้อมูลสถานีเป็นข้อมูลเก่า (ต้นทางไม่ตอบสนอง)' : '';
