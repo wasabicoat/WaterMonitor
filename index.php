@@ -119,6 +119,30 @@ figure.cam.err::after { content: 'ภาพไม่พร้อมใช้ง�
 .twbar { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; margin: 8px 0 4px; }
 .twbar div { height: 100%; transition: width .5s; }
 .tw-chart { position: relative; height: 160px; margin-top: 8px; }
+
+/* ---------- Basin (upstream) / Rangsit / links additions ---------- */
+.card .body { min-width: 0; }
+.bs-flow { display: flex; align-items: stretch; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
+.bs-tile { flex: 0 0 auto; width: 190px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bs-tile .bs-code { font-weight: 700; }
+.bs-tile small { color: var(--muted); display: block; }
+.bs-tile .bs-big { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.bs-tile .badge { align-self: flex-start; font-size: .8rem; padding: 2px 10px; }
+.bs-tile.old { opacity: .7; }
+.bs-arrow { flex: 0 0 auto; align-self: center; color: var(--muted); font-size: 1.3rem; }
+.bs-dams { margin: 14px 0; }
+.bs-dams .tw { padding: 10px 12px; }
+.bs-sub { margin: 14px 0 6px; font-weight: 600; }
+#bsProv { margin: 8px 0; }
+.camgrid.rs { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+@media (max-width: 600px) { .camgrid.rs { grid-template-columns: 1fr; } }
+figure.cam .rs-info { cursor: pointer; margin-top: 4px; }
+figure.cam .rs-info .badge { font-size: .8rem; padding: 2px 10px; display: inline-block; }
+ul.linklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: 1fr; }
+@media (min-width: 700px) { ul.linklist { grid-template-columns: 1fr 1fr; } }
+ul.linklist li { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; min-width: 0; overflow-wrap: anywhere; }
+ul.linklist a { font-weight: 600; }
+ul.linklist small { display: block; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -136,6 +160,9 @@ figure.cam.err::after { content: 'ภาพไม่พร้อมใช้ง�
   <a href="#fblive">ท่าอิฐ</a>
   <a href="#history">ระดับน้ำย้อนหลัง</a>
   <a href="#thaiwater">ThaiWater</a>
+  <a href="#basin">ต้นน้ำ</a>
+  <a href="#rangsit">กล้องรังสิต</a>
+  <a href="#links">ลิงก์กล้องอื่น</a>
   <a href="#nbcctv">CCTV นนทบุรี</a>
   <a href="#stations">สถานีวัดน้ำ</a>
 </div></nav>
@@ -235,6 +262,62 @@ figure.cam.err::after { content: 'ภาพไม่พร้อมใช้ง�
       <div class="twgrid" id="twGrid"></div>
       <div class="meta" id="twMsg"></div>
       <div class="meta">ที่มา: <a href="https://nonthaburi.thaiwater.net/wl" target="_blank" rel="noopener">ศูนย์ข้อมูลน้ำระดับจังหวัดนนทบุรี (ThaiWater / สสน.)</a> · ข้อมูลทุก 10 นาที · กราฟย้อนหลัง 48 ชม. · % คือระดับน้ำเทียบกับระดับตลิ่ง</div>
+    </div>
+  </section>
+
+  <!-- ต้นน้ำเจ้าพระยา (ThaiWater basin) -->
+  <section class="card wide" id="basin">
+    <h2>🌊 น้ำจากต้นน้ำเจ้าพระยา → นนทบุรี</h2>
+    <div class="body">
+      <div class="bs-flow" id="bsKey"></div>
+      <p class="legend">ปริมาณน้ำไหลผ่าน (ลบ.ม./วินาที) ที่นครสวรรค์ (C.2) และท้ายเขื่อนเจ้าพระยา (C.13) ใช้คาดการณ์น้ำที่จะมาถึงนนทบุรีในอีก 2–4 วัน</p>
+      <div class="bs-sub">เขื่อนหลัก</div>
+      <div class="twgrid bs-dams" id="bsDams"></div>
+      <div class="bs-sub">สถานีวัดน้ำ นนทบุรี · ปทุมธานี · อยุธยา · กรุงเทพฯ</div>
+      <div class="meta" id="bsSummary"></div>
+      <div class="tabs" id="bsProv">
+        <button data-p="" class="active">ทั้งหมด</button>
+        <button data-p="นนทบุรี">นนทบุรี</button>
+        <button data-p="ปทุมธานี">ปทุมธานี</button>
+        <button data-p="พระนครศรีอยุธยา">พระนครศรีอยุธยา</button>
+        <button data-p="กรุงเทพมหานคร">กรุงเทพมหานคร</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr>
+        <th>สถานี</th><th>จังหวัด</th><th>ลำน้ำ</th><th>ระดับ (ม.รทก.)</th><th>% ตลิ่ง</th><th>สถานการณ์</th><th>เวลา</th>
+      </tr></thead><tbody id="bsTable"></tbody></table></div>
+      <details class="data">
+        <summary id="bsGatesSum">ประตูระบายน้ำ</summary>
+        <div class="table-wrap"><table><thead><tr><th>ประตู</th><th>จังหวัด</th><th>หน้า (ม.รทก.)</th><th>ท้าย (ม.รทก.)</th><th>เวลา</th></tr></thead><tbody id="bsGates"></tbody></table></div>
+      </details>
+      <div class="meta" id="bsMsg"></div>
+      <div class="meta">ที่มา: ThaiWater (สสน.) · อัปเดตทุก 10 นาที · ค้นพบแหล่งข้อมูลผ่าน <a href="https://rutunnam.vercel.app" target="_blank" rel="noopener">รู้ทันน้ำ</a></div>
+    </div>
+  </section>
+
+  <!-- กล้องวัดระดับน้ำ รังสิต -->
+  <section class="card wide" id="rangsit">
+    <h2>📷 กล้องวัดระดับน้ำ รังสิต–ปทุมธานี (AI อ่านระดับน้ำ)</h2>
+    <div class="body">
+      <div class="camgrid rs" id="rsGrid"></div>
+      <div class="meta" id="rsMsg"></div>
+      <div class="meta">ที่มา: ศูนย์ข้อมูลภัยพิบัติ เทศบาลนครรังสิต (<a href="https://cdp.rangsitcity.go.th/" target="_blank" rel="noopener">cdp.rangsitcity.go.th</a>) · ระดับน้ำประเมินอัตโนมัติจากภาพ (OpenCV) โดยต้นทาง</div>
+    </div>
+  </section>
+
+  <!-- ลิงก์กล้องอื่น -->
+  <section class="card wide" id="links">
+    <h2>🔗 กล้องและข้อมูลน้ำจากแหล่งอื่น</h2>
+    <div class="body">
+      <ul class="linklist">
+        <li><a href="https://wmsc.rid.go.th/cctv2/" target="_blank" rel="noopener">ศูนย์กล้องลุ่มน้ำเจ้าพระยา (กรมชลประทาน)</a><small>เว็บไซต์ระบุว่ารองรับ Firefox</small></li>
+        <li><a href="https://www.thaiclouderp.com/CCTV_MONITOR/web/pakkred" target="_blank" rel="noopener">กล้องถนนปากเกร็ด (เทศบาลนครปากเกร็ด)</a></li>
+        <li><a href="https://rangsitcity.go.th/cctvrangsitcity/" target="_blank" rel="noopener">กล้องจราจรเทศบาลนครรังสิต</a></li>
+        <li><a href="https://www.muangpathum.org/th/z_main.jsp" target="_blank" rel="noopener">เทศบาลเมืองปทุมธานี (กล้องสวนเทพปทุมฯ)</a></li>
+        <li><a href="https://telemetry.dwr.go.th/reportCctv" target="_blank" rel="noopener">ศูนย์กล้องระดับน้ำทั่วประเทศ (กรมทรัพยากรน้ำ)</a></li>
+        <li><a href="https://disaster.gistda.or.th/flood" target="_blank" rel="noopener">แผนที่น้ำท่วม 7 วัน (GISTDA)</a></li>
+        <li><a href="https://rutunnam.vercel.app" target="_blank" rel="noopener">รู้ทันน้ำ — แผนที่สถานการณ์น้ำ</a><small>แหล่งอ้างอิงรายชื่อกล้องและแหล่งข้อมูลในส่วนนี้</small></li>
+      </ul>
+      <p class="legend">กล้องของ กทม. (dds.bangkok.go.th) ไม่ได้นำมาแสดง เพราะภาพไม่อัปเดตมาตั้งแต่ ส.ค. 2569</p>
     </div>
   </section>
 
@@ -559,16 +642,14 @@ $('nbZone').onclick = e => {
 };
 $('nbSearch').oninput = nbApplyFilter;
 
-function nbOpenLightbox(st, cam, idx) {
-  const cams = st.cams || [];
-  const capHtml = '<code>' + esc(st.code) + '</code> ' + esc(st.name) + (cams.length > 1 ? ' · Cam' + (idx + 1) : '');
+function openLightbox(src, captionHtml, readingsText, alt) {
   const box = document.createElement('div');
   box.className = 'lightbox';
   box.innerHTML =
     '<div class="lb-inner">' +
-      '<img src="' + cam.url + '&t=' + Date.now() + '" alt="' + esc(st.code + ' ' + st.name) + '">' +
-      '<div class="lb-cap">' + capHtml + '</div>' +
-      '<div class="lb-readings">' + esc(nbReadingsLine(st)) + '</div>' +
+      '<img src="' + src + '" alt="' + esc(alt || '') + '">' +
+      '<div class="lb-cap">' + captionHtml + '</div>' +
+      '<div class="lb-readings">' + esc(readingsText || '') + '</div>' +
     '</div>' +
     '<button type="button" class="lb-close" aria-label="ปิด">×</button>';
   document.body.appendChild(box);
@@ -582,6 +663,12 @@ function nbOpenLightbox(st, cam, idx) {
   box.addEventListener('click', e => { if (e.target === box) close(); });
   box.querySelector('.lb-close').onclick = close;
   document.addEventListener('keydown', onKey);
+}
+
+function nbOpenLightbox(st, cam, idx) {
+  const cams = st.cams || [];
+  const capHtml = '<code>' + esc(st.code) + '</code> ' + esc(st.name) + (cams.length > 1 ? ' · Cam' + (idx + 1) : '');
+  openLightbox(cam.url + '&t=' + Date.now(), capHtml, nbReadingsLine(st), st.code + ' ' + st.name);
 }
 
 function nbBuildGrid(stations) {
@@ -781,6 +868,197 @@ async function loadThaiwater() {
 }
 loadThaiwater();
 every(300000, loadThaiwater);
+
+// ---------- Basin: upstream Chao Phraya (ThaiWater) ----------
+let bsStations = [], bsProv = '';
+
+function bsFmt(v, d) { return v == null ? '–' : Number(v).toFixed(d); }
+
+function bsRenderKey(list) {
+  const parts = [];
+  list.forEach((st, i) => {
+    const sit = st.situation || {};
+    const big = st.discharge != null
+      ? Number(st.discharge).toLocaleString('th-TH') + ' <small style="display:inline">ลบ.ม./วิ</small>'
+      : bsFmt(st.wl, 2) + ' <small style="display:inline">ม.รทก.</small>';
+    const sub = st.discharge != null && st.qmax
+      ? Math.round(st.discharge / st.qmax * 100) + '% ของความจุลำน้ำ'
+      : (st.discharge != null && st.wl != null ? 'ระดับ ' + bsFmt(st.wl, 2) + ' ม.รทก.' : '');
+    if (i) parts.push('<span class="bs-arrow" aria-hidden="true">→</span>');
+    parts.push(
+      '<div class="bs-tile' + (st.recent ? '' : ' old') + '">' +
+        '<div><span class="bs-code">' + esc(st.code) + '</span> ' + esc(st.name) + '<small>' + esc(st.province) + '</small></div>' +
+        '<div class="bs-big">' + big + '</div>' +
+        (sub ? '<small>' + esc(sub) + '</small>' : '') +
+        (sit.text ? '<span class="badge" style="background:' + esc(sit.color || 'var(--line)') + ';color:' + twTextColor(sit.color) + '">' + esc(sit.text) + '</span>' : '') +
+        '<small>' + (st.pct != null ? Number(st.pct).toFixed(0) + '% ตลิ่ง · ' : '') + esc(String(st.datetime || '').slice(-5)) + (st.recent ? '' : ' (ข้อมูลเก่า)') + '</small>' +
+      '</div>'
+    );
+  });
+  $('bsKey').innerHTML = parts.join('');
+}
+
+function bsRenderDams(list) {
+  $('bsDams').innerHTML = list.map(d => {
+    const p = Number(d.storage_pct) || 0;
+    const color = p > 100 ? 'var(--crit)' : p > 80 ? 'var(--warn)' : 'var(--ok)';
+    return '<div class="tw"><div class="tw-head"><b>' + esc(d.name) + '</b></div>' +
+      '<div class="twbar"><div style="width:' + Math.max(0, Math.min(100, p)) + '%;background:' + color + '"></div></div>' +
+      '<div class="meta">เก็บกัก ' + bsFmt(d.storage_pct, 1) + '% · ระบายวันนี้ ' + bsFmt(d.released, 2) + ' ล้าน ลบ.ม. · ไหลเข้า ' + bsFmt(d.inflow, 2) + '</div>' +
+      '<div class="meta">ข้อมูลวันที่ ' + esc(d.date) + '</div></div>';
+  }).join('');
+}
+
+function bsRenderTable() {
+  const rows = bsStations.filter(s => !bsProv || s.province === bsProv);
+  $('bsTable').innerHTML = rows.map(s => {
+    const sit = s.situation || {};
+    const arrow = s.wl != null && s.wl_prev != null ? (s.wl > s.wl_prev ? ' ▲' : s.wl < s.wl_prev ? ' ▼' : '') : '';
+    return '<tr><td><code>' + esc(s.code) + '</code> ' + esc(s.name) + '</td>' +
+      '<td>' + esc(s.province) + '</td><td>' + esc(s.river) + '</td>' +
+      '<td>' + bsFmt(s.wl, 2) + arrow + '</td>' +
+      '<td>' + (s.pct != null ? Number(s.pct).toFixed(0) + '%' : '–') + '</td>' +
+      '<td><span class="dot" style="background:' + esc(sit.color || 'var(--line)') + '"></span>' + esc(sit.text || '–') + '</td>' +
+      '<td>' + esc(String(s.datetime || '').slice(-5)) + '</td></tr>';
+  }).join('') || '<tr><td colspan="7">ไม่มีข้อมูลสถานี</td></tr>';
+}
+
+$('bsProv').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  bsProv = b.dataset.p;
+  [...$('bsProv').children].forEach(x => x.classList.toggle('active', x === b));
+  bsRenderTable();
+};
+
+function bsRenderGates(list) {
+  $('bsGatesSum').textContent = 'ประตูระบายน้ำ (' + list.length + ')';
+  $('bsGates').innerHTML = list.map(g =>
+    '<tr><td>' + esc(g.name) + '</td><td>' + esc(g.province) + '</td><td>' + bsFmt(g.up, 2) + '</td><td>' + bsFmt(g.down, 2) +
+    '</td><td>' + esc(String(g.datetime || '').slice(-5)) + '</td></tr>'
+  ).join('') || '<tr><td colspan="5">ไม่มีข้อมูลประตูระบายน้ำ</td></tr>';
+}
+
+async function loadBasin() {
+  try {
+    const r = await fetch('api/basin.php', { cache: 'no-store' });
+    const text = await r.text();
+    let d;
+    try { d = JSON.parse(text); } catch (_) { throw new Error('api/basin.php ตอบกลับผิดรูปแบบ (HTTP ' + r.status + ')'); }
+    if (!r.ok) throw new Error(d.error || r.status);
+    bsStations = d.stations || [];
+    bsRenderKey(d.key_stations || []);
+    bsRenderDams(d.dams || []);
+    bsRenderTable();
+    bsRenderGates(d.gates || []);
+    let over = 0, many = 0;
+    bsStations.forEach(s => {
+      const t = s.situation && s.situation.text;
+      if (t === 'น้ำล้นตลิ่ง') over++; else if (t === 'น้ำมาก') many++;
+    });
+    $('bsSummary').textContent = 'ล้นตลิ่ง ' + over + ' สถานี · น้ำมาก ' + many + ' สถานี';
+    const msgs = [];
+    if (d.stale) msgs.push('ข้อมูลเป็นข้อมูลเก่า (ต้นทางไม่ตอบสนอง)');
+    const errs = d.errors || [];
+    if (errs.indexOf('gates') !== -1) msgs.push('ข้อมูลประตูระบายน้ำไม่พร้อมใช้งาน');
+    if (errs.indexOf('dams') !== -1) msgs.push('ข้อมูลเขื่อนไม่พร้อมใช้งาน');
+    $('bsMsg').textContent = msgs.join(' · ');
+  } catch (err) {
+    $('bsMsg').textContent = 'โหลดข้อมูลต้นน้ำไม่สำเร็จ: ' + err.message;
+  }
+}
+loadBasin();
+every(600000, loadBasin);
+
+// ---------- Rangsit CDP cameras ----------
+const RS_LEVEL = {
+  CRITICAL: { t: 'วิกฤต', c: 'var(--crit)' },
+  WARNING: { t: 'เตือนภัย', c: 'var(--warn)' },
+  WATCH: { t: 'เฝ้าระวัง', c: 'var(--warn)' },
+  NORMAL: { t: 'ปกติ', c: 'var(--ok)' },
+};
+let rsPoints = [], rsKey = null, rsObserver = null, rsVisible = new Set();
+
+function rsLevelInfo(level) { return RS_LEVEL[level] || { t: level || '–', c: 'var(--line)' }; }
+function rsTime(iso) {
+  const t = new Date(iso);
+  return isNaN(t) ? '' : t.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+function rsLoadImg(img) {
+  const ds = img.getAttribute('data-src');
+  if (ds) img.src = ds + '?t=' + Date.now();
+}
+function rsInfoHtml(p) {
+  const lv = rsLevelInfo(p.level);
+  const txt = lv.c === 'var(--warn)' ? '#000' : lv.c === 'var(--line)' ? 'var(--text)' : '#fff';
+  const tm = rsTime(p.updated_at);
+  return '<span class="badge" style="background:' + lv.c + ';color:' + txt + '">' + esc(lv.t) + '</span>' +
+    (p.reason ? '<div class="meta">' + esc(p.reason) + '</div>' : '') +
+    (tm ? '<div class="meta">อัปเดต ' + esc(tm) + '</div>' : '');
+}
+function rsOpen(p) {
+  const lv = rsLevelInfo(p.level);
+  const tm = rsTime(p.updated_at);
+  const cap = esc(p.name) + ' · ' + esc(lv.t);
+  const reading = (p.reason || '') + (tm ? (p.reason ? ' · ' : '') + 'อัปเดต ' + tm : '');
+  openLightbox(p.image + '?t=' + Date.now(), cap, reading, p.name);
+}
+function rsBuildGrid(points) {
+  $('rsGrid').innerHTML = points.map(p =>
+    '<figure class="cam" data-id="' + esc(p.id) + '">' +
+      '<img alt="' + esc(p.name) + '" loading="lazy" decoding="async" data-src="' + esc(p.image) + '">' +
+      '<figcaption>' + esc(p.name) + '</figcaption>' +
+      '<div class="rs-info"></div>' +
+    '</figure>'
+  ).join('');
+  if (rsObserver) rsObserver.disconnect();
+  rsVisible = new Set();
+  const figs = [...$('rsGrid').querySelectorAll('figure.cam')];
+  figs.forEach(fig => {
+    const img = fig.querySelector('img');
+    img.onerror = () => fig.classList.add('err');
+    img.onload = () => fig.classList.remove('err');
+    fig.addEventListener('click', () => {
+      const p = rsPoints.find(x => String(x.id) === fig.dataset.id);
+      if (p) rsOpen(p);
+    });
+  });
+  const imgs = figs.map(f => f.querySelector('img'));
+  if (!window.IntersectionObserver) { imgs.forEach(rsLoadImg); return; }
+  rsObserver = new IntersectionObserver(entries => entries.forEach(en => {
+    if (en.isIntersecting) { rsVisible.add(en.target); rsLoadImg(en.target); }
+    else rsVisible.delete(en.target);
+  }), { rootMargin: '200px' });
+  imgs.forEach(img => rsObserver.observe(img));
+}
+
+async function loadRangsit() {
+  try {
+    const r = await fetch('api/rangsit.php', { cache: 'no-store' });
+    const text = await r.text();
+    let d;
+    try { d = JSON.parse(text); } catch (_) { throw new Error('api/rangsit.php ตอบกลับผิดรูปแบบ (HTTP ' + r.status + ')'); }
+    if (!r.ok) throw new Error(d.error || r.status);
+    rsPoints = d.points || [];
+    const key = rsPoints.map(p => p.id + '@' + p.image).join('|');
+    const rebuilt = key !== rsKey;
+    if (rebuilt) { rsKey = key; rsBuildGrid(rsPoints); }
+    rsPoints.forEach(p => {
+      const fig = $('rsGrid').querySelector('figure.cam[data-id="' + p.id + '"]');
+      if (!fig) return;
+      fig.querySelector('.rs-info').innerHTML = rsInfoHtml(p);
+      if (!rebuilt) {
+        const img = fig.querySelector('img');
+        if (rsVisible.has(img) || !rsObserver) rsLoadImg(img);
+      }
+    });
+    if (!rsPoints.length) $('rsGrid').innerHTML = '';
+    $('rsMsg').textContent = d.stale ? 'ข้อมูลเป็นข้อมูลเก่า (ต้นทางไม่ตอบสนอง)' : (rsPoints.length ? '' : 'ไม่พบกล้อง');
+  } catch (err) {
+    $('rsMsg').textContent = 'โหลดข้อมูลกล้องรังสิตไม่สำเร็จ: ' + err.message;
+  }
+}
+loadRangsit();
+every(60000, loadRangsit);
 </script>
 </body>
 </html>
