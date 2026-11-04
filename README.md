@@ -45,15 +45,22 @@
 
 ```text
 .
-├── index.php                 # แดชบอร์ดหลัก (Single-page UI)
+├── index.php                 # แดชบอร์ดหลัก + แผนที่รวมกล้องทุกแหล่ง
+├── nbcctv.php                # หน้าตารางกล้อง CCTV เทศบาลนครนนทบุรี (แยกตามโซน)
+├── assets/
+│   └── app.css               # สไตล์ชีตหลักของระบบ
 ├── api/
 │   ├── lib.php               # ฟังก์ชันส่วนกลาง (cURL, Cache helper, JSON response)
 │   ├── basin.php             # Proxy ข้อมูลสถานีลุ่มน้ำเจ้าพระยา, 4 เขื่อนหลัก, ประตูระบายน้ำ (ThaiWater)
+│   ├── cctv.php              # รายชื่อกล้อง CCTV ทุกแหล่ง (Flood CCTV Thailand + พิกัดปากเกร็ด)
 │   ├── nonthaburi.php        # Proxy ข้อมูลสถานีและกล้อง CCTV เทศบาลนครนนทบุรี
 │   ├── pakkret.php           # Proxy ข้อมูลระดับน้ำและสถิติกราฟย้อนหลังท่าน้ำปากเกร็ด
+│   ├── pakkret_coords.json   # พิกัดกล้องปากเกร็ดสำรอง (fallback)
 │   ├── rangsit.php           # Scraper & Proxy กล้องวัดระดับน้ำ AI OpenCV (CDP เทศบาลนครรังสิต)
 │   ├── thaiwater.php         # Proxy ข้อมูลสถานีโทรมาตรระดับจังหวัด (ThaiWater / สสน.)
 │   └── viewers.php           # ตัวนับผู้ชมสด (heartbeat, ไม่เก็บ IP)
+├── scripts/
+│   └── build_pages.py        # สคริปต์สร้างไฟล์ Static (_site/) สำหรับ GitHub Pages
 ├── cache/                    # โฟลเดอร์เก็บไฟล์ JSON และรูปภาพชั่วคราว
 └── docs/
     ├── SPEC-basin.md         # ข้อกำหนดและการออกแบบระบบลุ่มน้ำเจ้าพระยา & รังสิต CDP
@@ -113,8 +120,8 @@
 แบนด์วิดท์ที่เซิร์ฟเวอร์ส่งต่อผู้ชม 1 คน: ดูส่วนบน ~3 kbps, เลื่อนดูตาราง CCTV +~17 kbps (วิดีโอสดไม่ผ่านเซิร์ฟเวอร์)
 ด้วยอัปโหลด ≥50 Mbps คอขวดคือ CPU ของ NAS — รองรับผู้ชม **พร้อมกัน** ราว 3,000–5,000 คน
 
-> **💡 หมายเหตุเกี่ยวกับ GitHub Pages:**
-> GitHub Pages รองรับเฉพาะไฟล์ Static (HTML, CSS, JS) เท่านั้น ไม่สามารถประมวลผลภาษา PHP บนเซิร์ฟเวอร์ได้ ดังนั้น API Proxy และการดึงข้อมูลสดจะต้องโฮสต์บนเซิร์ฟเวอร์ที่รองรับ PHP
+> **💡 การเปิดใช้งานผ่าน GitHub Pages (`https://wasabicoat.github.io/WaterMonitor/`):**
+> โปรเจกต์รองรับการสร้างเวอร์ชัน Static อัตโนมัติผ่าน `scripts/build_pages.py` และ GitHub Actions (`.github/workflows/pages.yml`) โดยแปลงหน้า PHP เป็น HTML และแนบข้อมูล API JSON พร้อมภาพแคชลงในกิ่ง `gh-pages` (กล้องที่โหลดตรงจาก CDN ผ่าน HTTPS เช่น ท่าน้ำนนทบุรี, Flood CCTV Thailand, ปากเกร็ด และรังสิต จะอัปเดตสดจากเบราว์เซอร์ผู้ชมโดยตรง)
 
 ---
 

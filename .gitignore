@@ -4,6 +4,11 @@
 .Spotlight-V100
 .Trashes
 Thumbs.db
+.claude/
+cache/.claude/
+
+# Static site build output
+_site/
 
 # Cache directory (ignore cached images, JSON responses, locks)
 cache/*

@@ -27,6 +27,7 @@ define('REFRESH_PARALLEL', 4);    // concurrent upstream snapshot requests (thei
 define('FAIL_BACKOFF', 180);     // seconds before retrying a camera whose last fetch failed
 define('REFRESH_BUDGET', 55);     // seconds a refresher may run
 define('IMG_TIMEOUT', 40);        // seconds per snapshot
+define('CAM_OLD_AGE', 1800);      // snapshot older than this = "may not be updating" (refreshes keep failing)
 
 /** Load the station list (raw upstream body) with a short cache; returns array|false. */
 function load_stations($dir, &$stale) {
@@ -99,6 +100,8 @@ function normalize_station($s) {
                 'name' => $name,
                 'url'  => 'api/nonthaburi.php?cam=' . rawurlencode($name),
                 'v'    => ($f && is_file($f)) ? filemtime($f) : 0,   // version: changes only when the snapshot changes
+                'off'  => ($f && is_file("$f.off")) ? 1 : 0,          // upstream sends the blue "no image" frame
+                'old'  => ($f && is_file($f) && time() - filemtime($f) > CAM_OLD_AGE) ? 1 : 0,
             );
         }
     }
@@ -172,9 +175,14 @@ function is_placeholder($b) {
     return $n > 0 && $blue / $n > 0.8;
 }
 
-/** Save a fresh snapshot unless both it and the cached one are the offline placeholder (keeps its version). */
+/**
+ * Save a fresh snapshot unless both it and the cached one are the offline placeholder (keeps its version).
+ * A "$f.off" marker tracks whether the camera currently sends the placeholder, so the JSON can flag it cheaply.
+ */
 function save_snapshot($f, $b) {
-    if (is_file($f) && is_placeholder($b) && is_placeholder(file_get_contents($f))) return;
+    $ph = is_placeholder($b);
+    if ($ph) @touch("$f.off"); elseif (is_file("$f.off")) @unlink("$f.off");
+    if ($ph && is_file($f) && is_placeholder(file_get_contents($f))) return;
     @file_put_contents($f, $b, LOCK_EX);
 }
 
