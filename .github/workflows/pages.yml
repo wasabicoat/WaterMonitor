@@ -30,7 +30,7 @@ jobs:
             mkdir -p cache
             git checkout gh-pages -- cache/ api/ 2>/dev/null || true
             if [ -d api ]; then
-              for f in basin.json thaiwater.json pakkret.json rangsit.json cctv.json; do
+              for f in basin.json thaiwater.json pakkret.json rangsit.json cctv.json mapdata.json; do
                 [ -f "api/$f" ] && [ ! -f "cache/$f" ] && cp "api/$f" "cache/$f" || true
               done
             fi
@@ -52,3 +52,4 @@ jobs:
           git add -A
           git commit -m "Deploy static build to GitHub Pages"
           git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+

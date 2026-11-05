@@ -263,8 +263,15 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
           <label class="meta"><input type="checkbox" id="acInView" checked> แสดงเฉพาะกล้องในกรอบแผนที่</label>
           <label class="meta"><input type="checkbox" id="acDead" checked> แสดงกล้องที่ไม่ทำงานบนแผนที่ (สีเทา)</label>
         </div>
-        <div id="acMap" role="region" aria-label="แผนที่ตำแหน่งกล้อง"></div>
+        <div class="meta mdsit" id="mdSit" aria-live="polite">กำลังโหลดสถานการณ์น้ำ…</div>
+        <div id="acMap" role="region" aria-label="แผนที่ตำแหน่งกล้อง น้ำท่วมถนน และระดับน้ำ"></div>
         <div class="meta" id="acMapNote">
+          <div class="mapkey mdkey">
+            <button type="button" data-layer="rf" aria-pressed="true"><i class="sq" style="--s:14px;--c:#2563eb"></i>น้ำท่วมถนน กทม. (เซนเซอร์ · แดง ≥20 ซม.)</button>
+            <button type="button" data-layer="lf" aria-pressed="true"><i class="tri" style="--s:14px;--c:#f97316"></i>รายงานน้ำท่วม Longdo (แดง = ผ่านไม่ได้)</button>
+            <button type="button" data-layer="wl" aria-pressed="true"><i class="dm" style="--s:12px;--c:linear-gradient(135deg,#FF0000 50%,#003CFA 50%)"></i>ระดับน้ำ ลุ่มเจ้าพระยา (แดง ล้นตลิ่ง · น้ำเงิน มาก · เขียว ปกติ · เหลือง น้อย)</button>
+            <button type="button" data-layer="radar" aria-pressed="false"><i style="--s:14px;--c:#38bdf8"></i>เรดาร์ฝน<span id="mdRadarT"></span></button>
+          </div>
           <div class="mapkey">
             <span><i style="--s:20px;--c:#7c3aed"></i>กล้องท่าน้ำ (กดเพื่อดูภาพสด)</span>
             <span><i style="--s:16px;--c:#0d9488"></i>CCTV เทศบาลนครนนทบุรี (มีระดับน้ำ)</span>
@@ -273,14 +280,20 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
             <span><i style="--s:12px;--c:#e8890c"></i>ภาพอาจไม่อัปเดต</span>
             <span><i style="--s:8px;--c:#8a8f98"></i>ต้นทางหยุดส่งภาพ (เช่น กทม., iTIC)</span>
           </div>
-          ชี้ที่จุดเพื่อดูภาพตัวอย่าง · กดจุดเพื่อดูภาพ · เลื่อน/ซูมแผนที่แล้วรายการกล้องด้านล่างจะเปลี่ยนตาม
+          ชี้ที่จุดเพื่อดูภาพตัวอย่าง · กดจุดเพื่อดูภาพ · เลื่อน/ซูมแผนที่แล้วรายการกล้องด้านล่างจะเปลี่ยนตาม ·
+          กดป้ายด้านบนเพื่อเปิด/ปิดชั้นข้อมูล · เซนเซอร์ถนนที่ไม่มีน้ำท่วมจะแสดงเมื่อซูมเข้าใกล้
         </div>
         <div class="camgrid" id="acGrid"></div>
         <div class="meta" id="acMsg">กำลังโหลดรายชื่อกล้อง…</div>
         <div class="meta">ที่มา: <a href="https://cctv.maholan.net/" target="_blank" rel="noopener">Flood CCTV Thailand</a>
           (รวมกล้อง เทศบาลนครปากเกร็ด, กรมทางหลวง, ปภ., iTIC, ThaiWater ฯลฯ) · พิกัดกล้องปากเกร็ด:
           <a href="https://www.thaiclouderp.com/CCTV_MONITOR/web/pakkred" target="_blank" rel="noopener">thaiclouderp</a> ·
-          กล้องที่ซ้ำกันแสดงเฉพาะตัวที่ดีที่สุด · กล้องที่ต้นทางหยุดส่งภาพแสดงเป็นจุดสีเทาบนแผนที่เท่านั้น · ภาพอัปเดตทุก 1 นาที (เฉพาะกล้องที่อยู่บนจอ)</div>
+          กล้องที่ซ้ำกันแสดงเฉพาะตัวที่ดีที่สุด · กล้องที่ต้นทางหยุดส่งภาพแสดงเป็นจุดสีเทาบนแผนที่เท่านั้น · ภาพอัปเดตทุก 1 นาที (เฉพาะกล้องที่อยู่บนจอ)<br>
+          ชั้นข้อมูลน้ำ: ■ <a href="https://floodbangkok.bangkok.go.th/" target="_blank" rel="noopener">ระบบตรวจวัดน้ำท่วมถนน กทม.</a>
+          (ข้อมูลชุดเดียวกับ <a href="https://world.tehx.dyndns.info/flood" target="_blank" rel="noopener">tehx flood</a>) ·
+          ▲ <a href="https://traffic.longdo.com/main/" target="_blank" rel="noopener">Longdo Traffic</a> ·
+          ◆ <a href="https://waterchart.thaiwater.net/basin/chaophraya" target="_blank" rel="noopener">ThaiWater ลุ่มเจ้าพระยา</a> ·
+          เรดาร์ฝนแบบเดียวกับ <a href="https://rutunnam.vercel.app" target="_blank" rel="noopener">รู้ทันน้ำ</a> (RainViewer) · อัปเดตทุก 3 นาที</div>
       </div>
     </section>
 
@@ -851,6 +864,157 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
       acApplyFilter();
     }
 
+    // ---------- Situation layers on the same map (api/mapdata.php) ----------
+    // Shapes keep them apart from the camera circles: ◆ water level (ThaiWater basin), ■ Bangkok road-flood sensor,
+    // ▲ Longdo flood report. Drawn on the map's one canvas; the legend chips switch each layer on/off.
+    // Dry road sensors only appear from zoom 13, so the city view shows just the flooded ones.
+    const MD_MS = 180000, MD_DRY_ZOOM = 13, MD_WL_ZOOM = 10;
+    let mdData = null, mdShape = null, mdRadar = null, mdRadarUrl = '';
+    const mdLayers = {}, mdOn = { wl: true, rf: true, lf: true, radar: false };
+    function mdShapes() {
+      if (mdShape) return;
+      L.Canvas.include({
+        _updateMdShape(layer) {
+          if (!this._drawing || layer._empty()) return;
+          const p = layer._point, ctx = this._ctx, r = Math.max(Math.round(layer._radius), 1), s = layer.options.shape;
+          ctx.beginPath();
+          if (s === 'dm') { ctx.moveTo(p.x, p.y - r); ctx.lineTo(p.x + r, p.y); ctx.lineTo(p.x, p.y + r); ctx.lineTo(p.x - r, p.y); }
+          else if (s === 'tri') { ctx.moveTo(p.x, p.y - r); ctx.lineTo(p.x + r, p.y + r * .8); ctx.lineTo(p.x - r, p.y + r * .8); }
+          else ctx.rect(p.x - r * .85, p.y - r * .85, r * 1.7, r * 1.7);
+          ctx.closePath();
+          this._fillStroke(ctx, layer);
+        }
+      });
+      mdShape = L.CircleMarker.extend({ _updatePath() { this._renderer._updateMdShape ? this._renderer._updateMdShape(this) : L.CircleMarker.prototype._updatePath.call(this); } });
+    }
+    function mdMarker(ll, shape, r, fill, tip, popup) {
+      const m = new mdShape(ll, { shape, radius: r, weight: 1.5, color: '#1e293b', fillColor: fill, fillOpacity: .95 });
+      if (acHover) m.bindTooltip(tip, { direction: 'top', offset: [0, -r] });
+      return m.bindPopup(popup, { maxWidth: 300 });
+    }
+    function mdTime(sec) {
+      const d = new Date(sec * 1000), p = n => String(n).padStart(2, '0');
+      return (Date.now() - d > 864e5 ? p(d.getDate()) + '/' + p(d.getMonth() + 1) + ' ' : '') + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    function mdRfColor(cm) { return cm >= 20 ? '#dc2626' : cm >= 10 ? '#1e3a8a' : cm > 0 ? '#2563eb' : '#bfdbfe'; }
+    const mdGmap = (lat, lng) => '<a href="https://www.google.com/maps?q=' + lat + ',' + lng + '" target="_blank" rel="noopener">แผนที่</a>';
+
+    function mdDrawWl() {
+      const g = mdLayers.wl; g.clearLayers();
+      if (!mdOn.wl || !mdData) return;
+      const all = acMap.getZoom() >= MD_WL_ZOOM;
+      mdData.wl.forEach(s => {   // [code, name, prov, lat, lng, wl, bank, pct, color, situation, datetime, trend]
+        if (!all && !(s[7] > 70)) return;   // basin-wide view: only high / over-bank stations
+        const tr = s[11] > 0 ? ' ▲' : s[11] < 0 ? ' ▼' : '';
+        const pct = s[7] != null ? s[7].toFixed(0) + '% ของตลิ่ง' : '';
+        mdMarker([s[3], s[4]], 'dm', s[7] > 100 ? 8 : 6, s[8],
+          esc(s[1]) + ' · ' + s[5].toFixed(2) + ' ม.' + tr + (pct ? ' · ' + pct : ''),
+          '<b>◆ ' + esc(s[1]) + '</b> <small>' + esc(s[0]) + '</small><br><span class="dot" style="background:' + esc(s[8]) + '"></span>' + esc(s[9]) +
+          (pct ? ' · ' + pct : '') + '<br>ระดับน้ำ <b>' + s[5].toFixed(2) + ' ม.รทก.</b>' + tr + (s[6] != null ? ' · ตลิ่ง ' + s[6].toFixed(2) : '') +
+          '<br><small>' + esc(s[2]) + ' · ' + esc(String(s[10]).slice(-5)) + ' น. · ' + mdGmap(s[3], s[4]) +
+          ' · <a href="https://waterchart.thaiwater.net/basin/chaophraya" target="_blank" rel="noopener">สสน.</a></small>').addTo(g);
+      });
+    }
+    function mdDrawRf() {
+      const g = mdLayers.rf; g.clearLayers();
+      if (!mdOn.rf || !mdData) return;
+      const dry = acMap.getZoom() >= MD_DRY_ZOOM, old = Date.now() / 1000 - 7200;
+      mdData.rf.forEach(s => {   // [code, name, district, lat, lng, now_cm, max_cm, unix, malfunction]
+        const wet = s[5] > 0 && !s[8] && s[7] > old;
+        if (!wet && !dry) return;
+        const state = s[8] ? '⛔ เซนเซอร์ขัดข้อง' : s[7] <= old ? '⚠️ ไม่มีข้อมูลใหม่' : wet ? '🌊 น้ำท่วมถนน <b>' + s[5] + ' ซม.</b>' : 'ไม่มีน้ำท่วม';
+        mdMarker([s[3], s[4]], 'sq', wet ? (s[5] >= 20 ? 9 : 7) : 4, s[8] || s[7] <= old ? '#9ca3af' : mdRfColor(wet ? s[5] : 0),
+          esc(s[1]) + (wet ? ' · น้ำท่วม ' + s[5] + ' ซม.' : ''),
+          '<b>■ ' + esc(s[1]) + '</b> <small>' + esc(s[0]) + '</small><br>' + state +
+          (s[6] > 0 ? ' · สูงสุด ' + s[6] + ' ซม.' : '') + '<br><small>เขต' + esc(s[2]) + ' · ' + (s[7] ? mdTime(s[7]) + ' น. · ' : '') + mdGmap(s[3], s[4]) +
+          ' · <a href="https://floodbangkok.bangkok.go.th/road-flood" target="_blank" rel="noopener">กทม.</a></small>').addTo(g);
+      });
+    }
+    function mdDrawLf() {
+      const g = mdLayers.lf; g.clearLayers();
+      if (!mdOn.lf || !mdData) return;
+      mdData.lf.forEach(e => {   // [title, lat, lng, start, detail, impassable]
+        mdMarker([e[1], e[2]], 'tri', 8, e[5] ? '#dc2626' : '#f97316', esc(e[0]),
+          '<b>▲ ' + esc(e[0]) + '</b>' + (e[4] ? '<br><small>' + esc(e[4]) + '</small>' : '') +
+          '<br><small>เริ่ม ' + esc(String(e[3]).slice(8, 10) + '/' + String(e[3]).slice(5, 7) + ' ' + String(e[3]).slice(11, 16)) + ' น. · ' + mdGmap(e[1], e[2]) +
+          ' · <a href="https://traffic.longdo.com/" target="_blank" rel="noopener">Longdo Traffic</a></small>').addTo(g);
+      });
+    }
+    function mdDraw() { if (!acMap || !mdData) return; mdDrawWl(); mdDrawRf(); mdDrawLf(); mdSummary(); }
+
+    // One line above the map: what is happening right now; each part zooms the map to those points
+    function mdSummary() {
+      const old = Date.now() / 1000 - 7200;
+      const rf = mdData.rf.filter(s => s[5] > 0 && !s[8] && s[7] > old).sort((a, b) => b[5] - a[5]);
+      const over = mdData.wl.filter(s => s[7] > 100), high = mdData.wl.filter(s => s[7] > 70 && s[7] <= 100);   // ThaiWater scale
+      const lf = mdData.lf;
+      const part = (k, pts, html) => '<button type="button" class="linkbtn" data-md="' + k + '" data-pts="' + esc(JSON.stringify(pts)) + '">' + html + '</button>';
+      $('mdSit').innerHTML = '<b>สถานการณ์ตอนนี้:</b> ' + [
+        rf.length ? part('rf', rf.map(s => [s[3], s[4]]), '■ น้ำท่วมถนน กทม. ' + rf.length + ' จุด (สูงสุด ' + rf[0][5] + ' ซม. ' + esc(rf[0][1]) + ')') : '■ ถนน กทม. ไม่มีน้ำท่วม (' + mdData.rf.length + ' เซนเซอร์)',
+        lf.length ? part('lf', lf.map(e => [e[1], e[2]]), '▲ รายงานน้ำท่วม ' + lf.length + ' จุด') : '▲ ไม่มีรายงานน้ำท่วม',
+        over.length ? part('wl', over.map(s => [s[3], s[4]]), '◆ ล้นตลิ่ง ' + over.length + ' สถานี') : '◆ ไม่มีสถานีล้นตลิ่ง',
+        high.length ? part('wl', high.map(s => [s[3], s[4]]), 'น้ำมาก ' + high.length + ' สถานี') : '',
+      ].filter(Boolean).join(' · ') + (mdData.stale ? ' · <small>(บางแหล่งไม่ตอบสนอง แสดงข้อมูลล่าสุดที่มี)</small>' : '');
+    }
+    $('mdSit').onclick = e => {
+      const b = e.target.closest('button[data-md]'); if (!b || !acMap) return;
+      const k = b.dataset.md;
+      if (!mdOn[k]) mdToggle(k);
+      acMap.fitBounds(JSON.parse(b.dataset.pts), { maxZoom: 14, padding: [30, 30] });
+    };
+
+    // Rain radar (RainViewer, as on rutunnam): newest frame, checked only while the layer is on
+    async function mdRadarLoad() {
+      if (!acMap || !mdOn.radar) return;
+      try {
+        const d = await (await fetch('https://api.rainviewer.com/public/weather-maps.json', { cache: 'no-store' })).json();
+        const f = (d.radar && d.radar.past || []).filter(x => /^\/[\w/.-]+$/.test(x.path)).sort((a, b) => b.time - a.time)[0];
+        if (!f || !/^https:\/\//.test(d.host)) return;
+        const url = d.host + f.path + '/256/{z}/{x}/{y}/2/1_1.png';
+        if (url === mdRadarUrl) return;
+        mdRadarUrl = url;
+        if (mdRadar) mdRadar.setUrl(url);
+        else mdRadar = L.tileLayer(url, { opacity: .55, maxNativeZoom: 7, attribution: '<a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a>' });
+        if (mdOn.radar && !acMap.hasLayer(mdRadar)) mdRadar.addTo(acMap);
+        $('mdRadarT').textContent = ' ' + mdTime(f.time);
+      } catch (_) { $('mdRadarT').textContent = ' (โหลดไม่ได้)'; }
+    }
+    function mdToggle(k) {
+      mdOn[k] = !mdOn[k];
+      const b = document.querySelector('.mapkey [data-layer="' + k + '"]');
+      if (b) b.setAttribute('aria-pressed', mdOn[k]);
+      if (k === 'radar') { if (mdOn.radar) mdRadarLoad(); else if (mdRadar) acMap.removeLayer(mdRadar); return; }
+      if (k === 'wl') mdDrawWl(); else if (k === 'rf') mdDrawRf(); else mdDrawLf();
+    }
+    document.querySelectorAll('.mapkey [data-layer]').forEach(b => { b.onclick = () => { if (acMap) mdToggle(b.dataset.layer); }; });
+
+    async function mdLoad() {
+      if (!acMap) return;
+      try {
+        const r = await fetch('api/mapdata.php', { cache: 'no-store' });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || r.status);
+        mdData = { wl: d.wl || [], rf: d.rf || [], lf: d.lf || [], stale: d.stale };
+        mdDraw();
+      } catch (err) {
+        if (!mdData) $('mdSit').textContent = 'โหลดข้อมูลน้ำท่วม/ระดับน้ำไม่สำเร็จ: ' + err.message;
+      }
+    }
+    function mdInit() {
+      mdShapes();
+      ['wl', 'rf', 'lf'].forEach(k => { mdLayers[k] = L.layerGroup().addTo(acMap); });
+      // Redraw only when the zoom crosses a detail threshold
+      let wasDry = acMap.getZoom() >= MD_DRY_ZOOM, wasAll = acMap.getZoom() >= MD_WL_ZOOM;
+      acMap.on('zoomend', () => {
+        const z = acMap.getZoom(), dry = z >= MD_DRY_ZOOM, all = z >= MD_WL_ZOOM;
+        if (dry !== wasDry) { wasDry = dry; mdDrawRf(); }
+        if (all !== wasAll) { wasAll = all; mdDrawWl(); }
+      });
+      mdLoad();
+    }
+    every(MD_MS, mdLoad);
+    every(600000, mdRadarLoad);
+
     function acOnFilter(fit) { acDrawMarkers(fit); acApplyFilter(); }
     $('acRegion').onchange = () => acOnFilter(true);
     $('acSearch').oninput = () => acOnFilter(false);
@@ -871,6 +1035,7 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 18, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       }).addTo(acMap);
+      mdInit();   // situation layers first, so camera dots draw on top of them
       acLayer = L.layerGroup().addTo(acMap);
       acRiverMarkers();
       acMap.on('moveend', acApplyFilter);

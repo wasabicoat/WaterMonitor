@@ -801,6 +801,41 @@ figure.cam.err::after {
   flex: none;
 }
 
+/* Situation layers: shape keys that double as on/off toggles */
+.mapkey i.sq { border-radius: 2px; }
+.mapkey i.dm { border-radius: 1px; transform: rotate(45deg) scale(.85); }
+.mapkey i.tri {
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+  clip-path: polygon(50% 0, 100% 90%, 0 90%);
+}
+
+.mdkey button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 10px 2px 6px;
+  cursor: pointer;
+}
+
+.mdkey button[aria-pressed="false"] {
+  opacity: .5;
+  text-decoration: line-through;
+}
+
+.mdsit {
+  margin: 4px 0 6px;
+  line-height: 1.6;
+}
+
+.mdsit .linkbtn { font-weight: 600; }
+
 .leaflet-tooltip.ac-tip img {
   display: block;
   width: 240px;

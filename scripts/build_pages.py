@@ -53,6 +53,7 @@ def render_php_template(path: Path) -> str:
         "fetch('api/thaiwater.php', { cache: 'no-store' })": "fetch('api/thaiwater.json', { cache: 'no-store' })",
         "fetch('api/basin.php', { cache: 'no-store' })": "fetch('api/basin.json', { cache: 'no-store' })",
         "fetch('api/rangsit.php', { cache: 'no-store' })": "fetch('api/rangsit.json', { cache: 'no-store' })",
+        "fetch('api/mapdata.php', { cache: 'no-store' })": "fetch('api/mapdata.json', { cache: 'no-store' })",
     }
     for old, new in replacements.items():
         text = text.replace(old, new)
@@ -203,7 +204,7 @@ def main():
         (OUT_DIR / sub).mkdir(parents=True, exist_ok=True)
 
     if refresh and shutil.which("php"):
-        for ep in ("basin.php", "thaiwater.php", "pakkret.php", "rangsit.php", "cctv.php", "nonthaburi.php"):
+        for ep in ("basin.php", "thaiwater.php", "pakkret.php", "rangsit.php", "cctv.php", "nonthaburi.php", "mapdata.php"):
             res = subprocess.run(
                 ["php", str(ROOT / "api" / ep)],
                 capture_output=True,
@@ -229,7 +230,7 @@ def main():
         json.dumps({"viewers": 1}), encoding="utf-8"
     )
 
-    for name in ("basin", "thaiwater", "rangsit"):
+    for name in ("basin", "thaiwater", "rangsit", "mapdata"):
         src = CACHE / f"{name}.json"
         if src.is_file():
             data = json.loads(src.read_text(encoding="utf-8"))
