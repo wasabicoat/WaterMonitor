@@ -35,10 +35,11 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
       <a href="#pathum">ปทุมธานี</a>
       <a href="#history">ระดับน้ำย้อนหลัง</a>
       <a href="#thaiwater">ThaiWater</a>
-      <a href="#basin">ต้นน้ำ</a>
       <a href="#rangsit">กล้องรังสิต</a>
-      <a href="#links">ลิงก์กล้องอื่น</a>
       <a href="#allcctv">CCTV ทุกแหล่ง</a>
+      <a href="#news">ข่าวน้ำท่วม</a>
+      <a href="#links">ลิงก์กล้องอื่น</a>
+      <a href="#basin">ต้นน้ำ</a>
       <a href="#stations">สถานีวัดน้ำ</a>
     </div>
   </nav>
@@ -155,6 +156,121 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
       </div>
     </section>
 
+    <!-- กล้องวัดระดับน้ำ รังสิต -->
+    <section class="card wide" id="rangsit">
+      <h2>📷 กล้องวัดระดับน้ำ รังสิต–ปทุมธานี (AI อ่านระดับน้ำ)</h2>
+      <div class="body">
+        <div class="camgrid rs" id="rsGrid"></div>
+        <div class="meta" id="rsMsg"></div>
+        <div class="meta">ที่มา: ศูนย์ข้อมูลภัยพิบัติ เทศบาลนครรังสิต (<a href="https://cdp.rangsitcity.go.th/"
+            target="_blank" rel="noopener">cdp.rangsitcity.go.th</a>) · ระดับน้ำประเมินอัตโนมัติจากภาพ (OpenCV)
+          โดยต้นทาง</div>
+      </div>
+    </section>
+
+    <!-- CCTV ทุกแหล่ง (cctv.maholan.net + พิกัดปากเกร็ดจาก thaiclouderp) -->
+    <section class="card wide" id="allcctv">
+      <h2>📷 CCTV ทุกแหล่ง <small id="acCount" class="meta"></small></h2>
+      <div class="body">
+        <div class="nbtools">
+          <select id="acRegion" aria-label="จังหวัด"></select>
+          <input id="acSearch" type="search" placeholder="ค้นหา ชื่อกล้อง เขต หรือหน่วยงาน เช่น ปากเกร็ด…">
+          <button type="button" class="mebtn" id="meBtn">📍 ตำแหน่งของฉัน</button>
+          <label class="meta"><input type="checkbox" id="acInView" checked> แสดงเฉพาะกล้องในกรอบแผนที่</label>
+          <label class="meta"><input type="checkbox" id="acDead" autocomplete="off"> แสดงกล้องที่ไม่ทำงานบนแผนที่ (สีเทา)</label>
+        </div>
+        <div class="meta mdsit" id="mdSit" aria-live="polite">กำลังโหลดสถานการณ์น้ำ…</div>
+        <div class="acsplit">
+        <div class="acleft">
+        <div id="acMap" role="region" aria-label="แผนที่ตำแหน่งกล้อง น้ำท่วมถนน และระดับน้ำ"></div>
+        <div class="meta" id="acMapNote">
+          <div class="mapkey mdkey">
+            <button type="button" data-layer="rf" aria-pressed="true"><i class="sq" style="--s:14px;--c:#2563eb"></i>น้ำท่วมถนน กทม. (เซนเซอร์ · แดง ≥20 ซม.)</button>
+            <button type="button" data-layer="lf" aria-pressed="true"><i class="tri" style="--s:14px;--c:#f97316"></i>รายงานน้ำท่วม Longdo (แดง = ผ่านไม่ได้)</button>
+            <button type="button" data-layer="wl" aria-pressed="true"><i class="dm" style="--s:12px;--c:linear-gradient(135deg,#FF0000 50%,#003CFA 50%)"></i>ระดับน้ำ ลุ่มเจ้าพระยา (แดง ล้นตลิ่ง · น้ำเงิน มาก · เขียว ปกติ · เหลือง น้อย)</button>
+            <button type="button" data-layer="radar" aria-pressed="false"><i style="--s:14px;--c:#38bdf8"></i>เรดาร์ฝน<span id="mdRadarT"></span></button>
+          </div>
+          <div class="mapkey mdkey" id="acKey">
+            <button type="button" data-cam="river" aria-pressed="true"><i style="--s:18px;--c:#7c3aed"></i>กล้องท่าน้ำ (ภาพสด)</button>
+            <button type="button" data-cam="nb" aria-pressed="true"><i style="--s:15px;--c:#0d9488"></i>CCTV เทศบาลนครนนทบุรี</button>
+            <button type="button" data-cam="rs" aria-pressed="true"><i style="--s:15px;--c:#db2777"></i>กล้องวัดระดับน้ำ รังสิต</button>
+            <button type="button" data-cam="ok" aria-pressed="true"><i style="--s:12px;--c:#0a6fb5"></i>กล้อง · ภาพอัปเดตปกติ</button>
+            <button type="button" data-cam="old" aria-pressed="true"><i style="--s:12px;--c:#e8890c"></i>กล้อง · ภาพอาจไม่อัปเดต</button>
+            <button type="button" data-cam="dead" aria-pressed="false"><i style="--s:9px;--c:#8a8f98"></i>กล้องที่ต้นทางหยุดส่งภาพ</button>
+          </div>
+          กดป้ายเพื่อเปิด/ปิดแต่ละชั้นบนแผนที่ · 📍 มุมซ้ายบนแผนที่ = ตำแหน่งของฉัน · ชี้ที่จุดเพื่อดูภาพตัวอย่าง · กดจุดเพื่อดูภาพ ·
+          เลื่อน/ซูมแผนที่แล้วรายการกล้องจะเปลี่ยนตาม · เซนเซอร์ถนนที่ไม่มีน้ำท่วมจะแสดงเมื่อซูมเข้าใกล้
+        </div>
+        </div>
+        <div class="acright"><div class="acbox">
+          <div class="meta acmsg" id="acMsg">กำลังโหลดรายชื่อกล้อง…</div>
+          <div class="camgrid" id="acGrid"></div>
+        </div></div>
+        </div>
+        <div class="meta">ที่มา: <a href="https://cctv.maholan.net/" target="_blank" rel="noopener">Flood CCTV Thailand</a>
+          (รวมกล้อง เทศบาลนครปากเกร็ด, กรมทางหลวง, ปภ., iTIC, ThaiWater ฯลฯ) · พิกัดกล้องปากเกร็ด:
+          <a href="https://www.thaiclouderp.com/CCTV_MONITOR/web/pakkred" target="_blank" rel="noopener">thaiclouderp</a> ·
+          กล้องที่ซ้ำกันแสดงเฉพาะตัวที่ดีที่สุด · กล้องที่ต้นทางหยุดส่งภาพแสดงเป็นจุดสีเทาบนแผนที่เท่านั้น · ภาพอัปเดตทุก 1 นาที (เฉพาะกล้องที่อยู่บนจอ)<br>
+          ชั้นข้อมูลน้ำ: ■ <a href="https://floodbangkok.bangkok.go.th/" target="_blank" rel="noopener">ระบบตรวจวัดน้ำท่วมถนน กทม.</a>
+          (ข้อมูลชุดเดียวกับ <a href="https://world.tehx.dyndns.info/flood" target="_blank" rel="noopener">tehx flood</a>) ·
+          ▲ <a href="https://traffic.longdo.com/main/" target="_blank" rel="noopener">Longdo Traffic</a> ·
+          ◆ <a href="https://waterchart.thaiwater.net/basin/chaophraya" target="_blank" rel="noopener">ThaiWater ลุ่มเจ้าพระยา</a> ·
+          เรดาร์ฝนแบบเดียวกับ <a href="https://rutunnam.vercel.app" target="_blank" rel="noopener">รู้ทันน้ำ</a> (RainViewer) · อัปเดตทุก 3 นาที</div>
+      </div>
+    </section>
+
+    <!-- ข่าวน้ำท่วม กทม.–ปริมณฑล: Facebook + สำนักข่าว ในรายการเดียว เรียงใหม่สุดก่อน -->
+    <section class="card wide" id="news">
+      <h2>📰 ข่าวน้ำท่วม กทม.–ปริมณฑล</h2>
+      <div class="body">
+        <div class="nwtop">
+          <div class="nwtabs" id="nwTabs" role="tablist" aria-label="เลือกแหล่งข่าว">
+            <button type="button" role="tab" data-k="" aria-selected="true">ล่าสุดทั้งหมด</button>
+            <button type="button" role="tab" data-k="fb" aria-selected="false">Facebook</button>
+            <button type="button" role="tab" data-k="news" aria-selected="false">สำนักข่าว</button>
+            <button type="button" role="tab" data-k="page" aria-selected="false">ตามเพจ ▾</button>
+          </div>
+          <select id="fbSel" aria-label="เลือกเพจ Facebook" hidden></select>
+        </div>
+        <p class="nwsum meta" id="nwSum" aria-live="polite">กำลังโหลดข่าว…</p>
+        <div id="nwFeed"></div>
+        <button type="button" class="nwmore" id="nwMore" hidden></button>
+        <p class="meta">กดที่ข่าวเพื่ออ่านต่อ · โพสต์ Facebook ที่มี ▶ กดเพื่อดูรูป/วิดีโอได้ในหน้านี้ ·
+          ที่มา: โพสต์สาธารณะบน Facebook ที่ <a href="https://news.google.com/" target="_blank" rel="noopener">Google News</a> ค้นเจอ,
+          Google News, มติชน, ข่าวสด, ประชาชาติธุรกิจ, ไทยรัฐ, อมรินทร์ทีวี · เฉพาะข่าวน้ำท่วมใน กทม. นนทบุรี ปทุมธานี
+          สมุทรปราการ นครปฐม สมุทรสาคร ย้อนหลัง 3 วัน · อัปเดตทุก 10 นาที · ข่าวมาจากต้นทางโดยตรง โปรดตรวจสอบก่อนแชร์</p>
+      </div>
+    </section>
+
+    <!-- ลิงก์กล้องอื่น -->
+    <section class="card wide" id="links">
+      <h2>🔗 กล้องและข้อมูลน้ำจากแหล่งอื่น</h2>
+      <div class="body">
+        <ul class="linklist">
+          <li><a href="https://wmsc.rid.go.th/cctv2/" target="_blank" rel="noopener">ศูนย์กล้องลุ่มน้ำเจ้าพระยา
+              (กรมชลประทาน)</a><small>เว็บไซต์ระบุว่ารองรับ Firefox</small></li>
+          <li><a href="https://flood.pop.in.th/" target="_blank" rel="noopener">Flood Bangkok (POPNIX)</a><small>เว็บรวมกล้องอีกแห่ง
+              มีกล้องสถานีเรดาร์ชายฝั่ง GISTDA และกรมทางหลวงชนบทเพิ่มเติม</small></li>
+          <li><a href="https://www.skylinewebcams.com/en/webcam/thailand.html" target="_blank" rel="noopener">SkylineWebcams ประเทศไทย</a><small>เว็บกล้องเชิงพาณิชย์
+              ไม่อนุญาตให้นำภาพไปแสดงบนเว็บอื่น จึงใส่เป็นลิงก์</small></li>
+          <li><a href="http://www.bmatraffic.com/index.aspx" target="_blank" rel="noopener">กล้องจราจร กทม. (bmatraffic)</a><small>ขณะนี้ต้นทางไม่ส่งภาพ (Bad Gateway) จึงยังไม่นำมาแสดง</small></li>
+          <li><a href="https://www.thaiclouderp.com/CCTV_MONITOR/web/pakkred" target="_blank"
+              rel="noopener">กล้องถนนปากเกร็ด (เทศบาลนครปากเกร็ด)</a></li>
+          <li><a href="https://rangsitcity.go.th/cctvrangsitcity/" target="_blank"
+              rel="noopener">กล้องจราจรเทศบาลนครรังสิต</a></li>
+          <li><a href="https://www.muangpathum.org/th/z_main.jsp" target="_blank" rel="noopener">เทศบาลเมืองปทุมธานี
+              (กล้องสวนเทพปทุมฯ)</a></li>
+          <li><a href="https://telemetry.dwr.go.th/reportCctv" target="_blank"
+              rel="noopener">ศูนย์กล้องระดับน้ำทั่วประเทศ (กรมทรัพยากรน้ำ)</a></li>
+          <li><a href="https://disaster.gistda.or.th/flood" target="_blank" rel="noopener">แผนที่น้ำท่วม 7 วัน
+              (GISTDA)</a></li>
+          <li><a href="https://rutunnam.vercel.app" target="_blank" rel="noopener">รู้ทันน้ำ —
+              แผนที่สถานการณ์น้ำ</a><small>แหล่งอ้างอิงรายชื่อกล้องและแหล่งข้อมูลในส่วนนี้</small></li>
+        </ul>
+        <p class="legend">กล้องของ กทม. (dds.bangkok.go.th) ไม่ได้นำมาแสดง เพราะภาพไม่อัปเดตมาตั้งแต่ ส.ค. 2569</p>
+      </div>
+    </section>
+
     <!-- ต้นน้ำเจ้าพระยา (ThaiWater basin) -->
     <section class="card wide" id="basin">
       <h2>🌊 น้ำจากต้นน้ำเจ้าพระยา → นนทบุรี</h2>
@@ -209,91 +325,6 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
         <div class="meta" id="bsMsg"></div>
         <div class="meta">ที่มา: ThaiWater (สสน.) · อัปเดตทุก 10 นาที · ค้นพบแหล่งข้อมูลผ่าน <a
             href="https://rutunnam.vercel.app" target="_blank" rel="noopener">รู้ทันน้ำ</a></div>
-      </div>
-    </section>
-
-    <!-- กล้องวัดระดับน้ำ รังสิต -->
-    <section class="card wide" id="rangsit">
-      <h2>📷 กล้องวัดระดับน้ำ รังสิต–ปทุมธานี (AI อ่านระดับน้ำ)</h2>
-      <div class="body">
-        <div class="camgrid rs" id="rsGrid"></div>
-        <div class="meta" id="rsMsg"></div>
-        <div class="meta">ที่มา: ศูนย์ข้อมูลภัยพิบัติ เทศบาลนครรังสิต (<a href="https://cdp.rangsitcity.go.th/"
-            target="_blank" rel="noopener">cdp.rangsitcity.go.th</a>) · ระดับน้ำประเมินอัตโนมัติจากภาพ (OpenCV)
-          โดยต้นทาง</div>
-      </div>
-    </section>
-
-    <!-- ลิงก์กล้องอื่น -->
-    <section class="card wide" id="links">
-      <h2>🔗 กล้องและข้อมูลน้ำจากแหล่งอื่น</h2>
-      <div class="body">
-        <ul class="linklist">
-          <li><a href="https://wmsc.rid.go.th/cctv2/" target="_blank" rel="noopener">ศูนย์กล้องลุ่มน้ำเจ้าพระยา
-              (กรมชลประทาน)</a><small>เว็บไซต์ระบุว่ารองรับ Firefox</small></li>
-          <li><a href="https://flood.pop.in.th/" target="_blank" rel="noopener">Flood Bangkok (POPNIX)</a><small>เว็บรวมกล้องอีกแห่ง
-              มีกล้องสถานีเรดาร์ชายฝั่ง GISTDA และกรมทางหลวงชนบทเพิ่มเติม</small></li>
-          <li><a href="https://www.skylinewebcams.com/en/webcam/thailand.html" target="_blank" rel="noopener">SkylineWebcams ประเทศไทย</a><small>เว็บกล้องเชิงพาณิชย์
-              ไม่อนุญาตให้นำภาพไปแสดงบนเว็บอื่น จึงใส่เป็นลิงก์</small></li>
-          <li><a href="http://www.bmatraffic.com/index.aspx" target="_blank" rel="noopener">กล้องจราจร กทม. (bmatraffic)</a><small>ขณะนี้ต้นทางไม่ส่งภาพ (Bad Gateway) จึงยังไม่นำมาแสดง</small></li>
-          <li><a href="https://www.thaiclouderp.com/CCTV_MONITOR/web/pakkred" target="_blank"
-              rel="noopener">กล้องถนนปากเกร็ด (เทศบาลนครปากเกร็ด)</a></li>
-          <li><a href="https://rangsitcity.go.th/cctvrangsitcity/" target="_blank"
-              rel="noopener">กล้องจราจรเทศบาลนครรังสิต</a></li>
-          <li><a href="https://www.muangpathum.org/th/z_main.jsp" target="_blank" rel="noopener">เทศบาลเมืองปทุมธานี
-              (กล้องสวนเทพปทุมฯ)</a></li>
-          <li><a href="https://telemetry.dwr.go.th/reportCctv" target="_blank"
-              rel="noopener">ศูนย์กล้องระดับน้ำทั่วประเทศ (กรมทรัพยากรน้ำ)</a></li>
-          <li><a href="https://disaster.gistda.or.th/flood" target="_blank" rel="noopener">แผนที่น้ำท่วม 7 วัน
-              (GISTDA)</a></li>
-          <li><a href="https://rutunnam.vercel.app" target="_blank" rel="noopener">รู้ทันน้ำ —
-              แผนที่สถานการณ์น้ำ</a><small>แหล่งอ้างอิงรายชื่อกล้องและแหล่งข้อมูลในส่วนนี้</small></li>
-        </ul>
-        <p class="legend">กล้องของ กทม. (dds.bangkok.go.th) ไม่ได้นำมาแสดง เพราะภาพไม่อัปเดตมาตั้งแต่ ส.ค. 2569</p>
-      </div>
-    </section>
-
-    <!-- CCTV ทุกแหล่ง (cctv.maholan.net + พิกัดปากเกร็ดจาก thaiclouderp) -->
-    <section class="card wide" id="allcctv">
-      <h2>📷 CCTV ทุกแหล่ง <small id="acCount" class="meta"></small></h2>
-      <div class="body">
-        <div class="nbtools">
-          <select id="acRegion" aria-label="จังหวัด"></select>
-          <input id="acSearch" type="search" placeholder="ค้นหา ชื่อกล้อง เขต หรือหน่วยงาน เช่น ปากเกร็ด…">
-          <label class="meta"><input type="checkbox" id="acInView" checked> แสดงเฉพาะกล้องในกรอบแผนที่</label>
-          <label class="meta"><input type="checkbox" id="acDead" checked> แสดงกล้องที่ไม่ทำงานบนแผนที่ (สีเทา)</label>
-        </div>
-        <div class="meta mdsit" id="mdSit" aria-live="polite">กำลังโหลดสถานการณ์น้ำ…</div>
-        <div id="acMap" role="region" aria-label="แผนที่ตำแหน่งกล้อง น้ำท่วมถนน และระดับน้ำ"></div>
-        <div class="meta" id="acMapNote">
-          <div class="mapkey mdkey">
-            <button type="button" data-layer="rf" aria-pressed="true"><i class="sq" style="--s:14px;--c:#2563eb"></i>น้ำท่วมถนน กทม. (เซนเซอร์ · แดง ≥20 ซม.)</button>
-            <button type="button" data-layer="lf" aria-pressed="true"><i class="tri" style="--s:14px;--c:#f97316"></i>รายงานน้ำท่วม Longdo (แดง = ผ่านไม่ได้)</button>
-            <button type="button" data-layer="wl" aria-pressed="true"><i class="dm" style="--s:12px;--c:linear-gradient(135deg,#FF0000 50%,#003CFA 50%)"></i>ระดับน้ำ ลุ่มเจ้าพระยา (แดง ล้นตลิ่ง · น้ำเงิน มาก · เขียว ปกติ · เหลือง น้อย)</button>
-            <button type="button" data-layer="radar" aria-pressed="false"><i style="--s:14px;--c:#38bdf8"></i>เรดาร์ฝน<span id="mdRadarT"></span></button>
-          </div>
-          <div class="mapkey">
-            <span><i style="--s:20px;--c:#7c3aed"></i>กล้องท่าน้ำ (กดเพื่อดูภาพสด)</span>
-            <span><i style="--s:16px;--c:#0d9488"></i>CCTV เทศบาลนครนนทบุรี (มีระดับน้ำ)</span>
-            <span><i style="--s:16px;--c:#db2777"></i>กล้องวัดระดับน้ำ รังสิต (AI อ่านระดับน้ำ)</span>
-            <span><i style="--s:12px;--c:#0a6fb5"></i>ภาพอัปเดตปกติ</span>
-            <span><i style="--s:12px;--c:#e8890c"></i>ภาพอาจไม่อัปเดต</span>
-            <span><i style="--s:8px;--c:#8a8f98"></i>ต้นทางหยุดส่งภาพ (เช่น กทม., iTIC)</span>
-          </div>
-          ชี้ที่จุดเพื่อดูภาพตัวอย่าง · กดจุดเพื่อดูภาพ · เลื่อน/ซูมแผนที่แล้วรายการกล้องด้านล่างจะเปลี่ยนตาม ·
-          กดป้ายด้านบนเพื่อเปิด/ปิดชั้นข้อมูล · เซนเซอร์ถนนที่ไม่มีน้ำท่วมจะแสดงเมื่อซูมเข้าใกล้
-        </div>
-        <div class="camgrid" id="acGrid"></div>
-        <div class="meta" id="acMsg">กำลังโหลดรายชื่อกล้อง…</div>
-        <div class="meta">ที่มา: <a href="https://cctv.maholan.net/" target="_blank" rel="noopener">Flood CCTV Thailand</a>
-          (รวมกล้อง เทศบาลนครปากเกร็ด, กรมทางหลวง, ปภ., iTIC, ThaiWater ฯลฯ) · พิกัดกล้องปากเกร็ด:
-          <a href="https://www.thaiclouderp.com/CCTV_MONITOR/web/pakkred" target="_blank" rel="noopener">thaiclouderp</a> ·
-          กล้องที่ซ้ำกันแสดงเฉพาะตัวที่ดีที่สุด · กล้องที่ต้นทางหยุดส่งภาพแสดงเป็นจุดสีเทาบนแผนที่เท่านั้น · ภาพอัปเดตทุก 1 นาที (เฉพาะกล้องที่อยู่บนจอ)<br>
-          ชั้นข้อมูลน้ำ: ■ <a href="https://floodbangkok.bangkok.go.th/" target="_blank" rel="noopener">ระบบตรวจวัดน้ำท่วมถนน กทม.</a>
-          (ข้อมูลชุดเดียวกับ <a href="https://world.tehx.dyndns.info/flood" target="_blank" rel="noopener">tehx flood</a>) ·
-          ▲ <a href="https://traffic.longdo.com/main/" target="_blank" rel="noopener">Longdo Traffic</a> ·
-          ◆ <a href="https://waterchart.thaiwater.net/basin/chaophraya" target="_blank" rel="noopener">ThaiWater ลุ่มเจ้าพระยา</a> ·
-          เรดาร์ฝนแบบเดียวกับ <a href="https://rutunnam.vercel.app" target="_blank" rel="noopener">รู้ทันน้ำ</a> (RainViewer) · อัปเดตทุก 3 นาที</div>
       </div>
     </section>
 
@@ -725,7 +756,7 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
       acLayer.clearLayers();
       const pts = [];
       acCams.forEach((c, i) => {
-        if (c[5] == null || !acMatch(i)) return;
+        if (c[5] == null || !acMatch(i) || (c[7] === 0 && !camOn.ok) || (c[7] === 1 && !camOn.old)) return;
         pts.push([c[5], c[6]]);
         if (c[7] === 2) {
           L.circleMarker([c[5], c[6]], { radius: 4, weight: 1, color: '#fff', fillOpacity: .7, fillColor: '#8a8f98' })
@@ -757,6 +788,7 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
       return pkData && pkData.image_url ? pkData.image_url : '';
     }
     function acRiverMarkers() {
+      acRiverLayer = L.layerGroup();
       AC_RIVER.forEach(r => {
         r.m = L.circleMarker(r.ll, { radius: 10, weight: 2, color: '#fff', fillOpacity: .95, fillColor: '#7c3aed' })
           .bindPopup(() => {
@@ -767,8 +799,9 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
             return media + '<br><b>📍 ' + esc(r.n) + '</b><br><small><a href="#' + r.card + '">ดูการ์ดด้านบน</a></small>';
           }, { maxWidth: 300 })
           .bindTooltip(() => { const src = acRiverSnap(r); return src ? acTip(src, r.n) : esc(r.n); }, { direction: 'top', offset: [0, -8], className: 'ac-tip' })
-          .addTo(acMap);
+          .addTo(acRiverLayer);
       });
+      camApply();
     }
 
     // Nonthaburi municipality stations (api/nonthaburi.php via loadNonthaburi): teal markers + tiles,
@@ -781,7 +814,7 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
     function acNbLabel(st) { return st.code + ' ' + st.name; }
     function acNbDraw() {
       if (!acMap) return;
-      if (!acNbLayer) acNbLayer = L.layerGroup().addTo(acMap);
+      if (!acNbLayer) { acNbLayer = L.layerGroup(); camApply(); }
       acNbLayer.clearLayers();
       nbStations.filter(acNbVisible).forEach(st => {
         const info = nbStatusInfo(worstStatus(st));
@@ -836,7 +869,7 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
     function acRsSrc(p) { return p.image + '?t=' + Math.floor(Date.now() / AC_MS); }
     function acRsDraw() {
       if (!acMap) return;
-      if (!acRsLayer) acRsLayer = L.layerGroup().addTo(acMap);
+      if (!acRsLayer) { acRsLayer = L.layerGroup(); camApply(); }
       acRsLayer.clearLayers();
       rsPoints.filter(acRsVisible).forEach(p => {
         const m = L.circleMarker([p.lat, p.lng], { radius: 8, weight: 2, color: '#fff', fillOpacity: .95, fillColor: '#db2777' });
@@ -1019,7 +1052,98 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
     $('acRegion').onchange = () => acOnFilter(true);
     $('acSearch').oninput = () => acOnFilter(false);
     $('acInView').onchange = () => acApplyFilter();
-    $('acDead').onchange = () => acDrawMarkers(false);
+    $('acDead').onchange = () => { acDrawMarkers(false); camSync(); };
+
+    // Camera legend chips switch their layer on the map (the camera list beside it is not affected).
+    // "dead" mirrors the checkbox above the map (off by default).
+    let acRiverLayer = null;
+    const camOn = { river: true, nb: true, rs: true, ok: true, old: true };
+    function camApply() {
+      if (!acMap) return;
+      [[acRiverLayer, camOn.river], [acNbLayer, camOn.nb], [acRsLayer, camOn.rs]].forEach(([g, on]) => {
+        if (g && on !== acMap.hasLayer(g)) on ? g.addTo(acMap) : acMap.removeLayer(g);
+      });
+    }
+    function camSync() {
+      $('acKey').querySelectorAll('[data-cam]').forEach(b =>
+        b.setAttribute('aria-pressed', b.dataset.cam === 'dead' ? $('acDead').checked : camOn[b.dataset.cam]));
+    }
+    $('acKey').onclick = e => {
+      const b = e.target.closest('[data-cam]'); if (!b) return;
+      const k = b.dataset.cam;
+      if (k === 'dead') { $('acDead').checked = !$('acDead').checked; $('acDead').onchange(); return; }
+      camOn[k] = !camOn[k];
+      if (k === 'ok' || k === 'old') acDrawMarkers(false); else camApply();
+      camSync();
+    };
+    camSync();
+
+    // "My location": GPS needs https (browsers refuse it on http). On http, or when GPS is refused, show an approximate
+    // position from the visitor's IP (geojs.io, then ipwho.is) as a wide circle, with a link to the https copy of the site.
+    const ME_HTTPS_URL = 'https://wasabicoat.github.io/WaterMonitor/';
+    let meLayer = null;
+    function meShow(lat, lng, acc, precise, note, quiet) {
+      if (!meLayer) meLayer = L.layerGroup().addTo(acMap);
+      meLayer.clearLayers();
+      const circle = L.circle([lat, lng], { radius: acc, color: '#2563eb', weight: 1, fillColor: '#3b82f6', fillOpacity: .12, interactive: false }).addTo(meLayer);
+      const dot = L.circleMarker([lat, lng], { radius: 8, weight: 3, color: '#fff', fillColor: '#2563eb', fillOpacity: 1 }).addTo(meLayer);
+      dot.bindPopup(precise ? '<b>📍 ตำแหน่งของคุณ</b><br><small>คลาดเคลื่อนประมาณ ±' + Math.round(acc) + ' ม.</small>'
+        : '<b>📍 ตำแหน่งโดยประมาณ</b>' + (note ? ' (' + esc(note) + ')' : '') + '<br><small>หาจาก IP อาจคลาดหลายกิโลเมตร' +
+          (location.protocol === 'http:' ? '<br>เบราว์เซอร์ให้ใช้ GPS เฉพาะหน้าเว็บ https — <a href="' + ME_HTTPS_URL + '" target="_blank" rel="noopener">เปิดเวอร์ชัน https เพื่อใช้ตำแหน่งแม่นยำ ↗</a>' : '') + '</small>');
+      if (quiet) return;
+      acMap.fitBounds(circle.getBounds(), { maxZoom: precise ? 16 : 12 });
+      dot.openPopup();
+    }
+    async function meApprox(why) {
+      const tries = [
+        ['https://get.geojs.io/v1/ip/geo.json', d => [+d.latitude, +d.longitude, d.city]],
+        ['https://ipwho.is/', d => d.success === false ? null : [+d.latitude, +d.longitude, d.city]],
+      ];
+      for (const [url, pick] of tries) {
+        try {
+          const v = pick(await (await fetch(url, { cache: 'no-store' })).json());
+          if (v && isFinite(v[0]) && isFinite(v[1])) { meShow(v[0], v[1], 5000, false, [v[2], why].filter(Boolean).join(' · ')); return; }
+        } catch (_) { }
+      }
+      alertBox('หาตำแหน่งไม่ได้' + (why ? ' (' + why + ')' : ''));
+    }
+    function alertBox(msg) { L.popup().setLatLng(acMap.getCenter()).setContent(esc(msg)).openOn(acMap); }
+    function meLocate(btn) {
+      btn.classList.add('busy');
+      const done = () => btn.classList.remove('busy');
+      if (!window.isSecureContext || !navigator.geolocation) { meApprox().finally(done); return; }
+      navigator.geolocation.getCurrentPosition(
+        pos => { meShow(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, true); done(); },
+        err => { meApprox(err.code === 1 ? 'ไม่ได้อนุญาตให้ใช้ตำแหน่ง' : 'GPS ไม่ตอบสนอง').finally(done); },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+    }
+    function meControl() {
+      const C = L.Control.extend({
+        options: { position: 'topleft' },
+        onAdd() {
+          const box = L.DomUtil.create('div', 'leaflet-bar ac-locate');
+          const a = L.DomUtil.create('a', '', box);
+          a.href = '#'; a.setAttribute('role', 'button'); a.title = 'ตำแหน่งของฉัน'; a.setAttribute('aria-label', 'ตำแหน่งของฉัน'); a.textContent = '📍';
+          L.DomEvent.disableClickPropagation(box);
+          L.DomEvent.on(a, 'click', e => { L.DomEvent.preventDefault(e); meLocate(a); });
+          return box;
+        }
+      });
+      new C().addTo(acMap);
+      // Location already allowed for this site (https only): show the dot right away, without moving the map
+      if (window.isSecureContext && navigator.geolocation && navigator.permissions) {
+        navigator.permissions.query({ name: 'geolocation' }).then(s => {
+          if (s.state === 'granted') navigator.geolocation.getCurrentPosition(
+            pos => meShow(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, true, '', true), () => { }, { maximumAge: 300000, timeout: 15000 });
+        }).catch(() => { });
+      }
+    }
+    // Toolbar button: same as the map's 📍, also brings the map into view (the map loads when near the screen)
+    $('meBtn').onclick = () => {
+      $('acMap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const go = () => acMap ? meLocate($('meBtn')) : setTimeout(go, 300);
+      go();
+    };
 
     function acLoadScript(src) {
       return new Promise((ok, fail) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = fail; document.head.appendChild(s); });
@@ -1038,6 +1162,7 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
       mdInit();   // situation layers first, so camera dots draw on top of them
       acLayer = L.layerGroup().addTo(acMap);
       acRiverMarkers();
+      meControl();
       acMap.on('moveend', acApplyFilter);
       acMap.on('popupopen', e => {   // popup image -> full-size lightbox
         e.popup.getElement().querySelectorAll('img[data-rs]').forEach(im => {
@@ -1124,6 +1249,171 @@ $pathumPlayer = 'http://101.109.253.60:8999/';   // เทศบาลเมื�
     loadAllCctv();
     every(600000, loadAllCctv);
     every(AC_MS, () => acVis.forEach(acLoad));
+
+    // ---------- Flood news (api/news.php) ----------
+    // items row: [kind ('fb' | 'news' | 'rss'), title, url, source, unix, img, snippet], newest first.
+    // pages: {slug: [[text, url, unix]]}; page_list: [[group, slug, name]].
+    // The list is plain cards (no Facebook frames), grouped by time, 12 at a time. A Facebook post with a real post URL
+    // opens Facebook's own player (photos / video) in a popup, one at a time; the SDK loads on the first such click.
+    const NW_MS = 600000, NW_STEP = 12;
+    let nwItems = [], fbPages = [], fbPosts = {}, nwTab = '', nwShown = NW_STEP, nwStarted = false, fbReady = null, nwRows = [];
+    const fbName = slug => { const p = fbPages.find(x => x[1].toLowerCase() === String(slug).toLowerCase()); return p ? p[2] : slug; };
+    const fbEmbeddable = u => /^https:\/\/(www|m)\.facebook\.com\/[^?#]+\/(posts|videos|reel|photos|permalink)\b|^https:\/\/(www|m)\.facebook\.com\/(reel|watch|photo|permalink\.php|story\.php)\b/.test(u);
+    const nwPad = n => String(n).padStart(2, '0');
+    function nwAgo(sec) {
+      const m = Math.max(0, Math.round((Date.now() / 1000 - sec) / 60));
+      return m < 1 ? 'เมื่อสักครู่' : m < 60 ? m + ' นาทีที่แล้ว' : m < 1440 ? Math.floor(m / 60) + ' ชม.ที่แล้ว' : Math.floor(m / 1440) + ' วันที่แล้ว';
+    }
+    function nwDate(sec) { const d = new Date(sec * 1000); return nwPad(d.getDate()) + '/' + nwPad(d.getMonth() + 1) + ' ' + nwPad(d.getHours()) + ':' + nwPad(d.getMinutes()) + ' น.'; }
+    function nwGroup(sec) {
+      const now = new Date(), d = new Date(sec * 1000), day = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+      if (Date.now() / 1000 - sec < 3600) return '🕐 1 ชั่วโมงล่าสุด';
+      const diff = Math.round((day(now) - day(d)) / 864e5);
+      return diff <= 0 ? 'วันนี้' : diff === 1 ? 'เมื่อวาน' : 'ก่อนหน้านั้น';
+    }
+
+    // Facebook SDK, loaded once on demand; resolves to FB or null when blocked (ad blockers, privacy settings)
+    function fbSdk() {
+      if (fbReady) return fbReady;
+      fbReady = new Promise(ok => {
+        if (!document.getElementById('fb-root')) { const r = document.createElement('div'); r.id = 'fb-root'; document.body.prepend(r); }
+        window.fbAsyncInit = () => { FB.init({ xfbml: false, version: 'v21.0' }); ok(window.FB); };
+        const s = document.createElement('script');
+        s.async = true; s.crossOrigin = 'anonymous';
+        s.src = 'https://connect.facebook.net/th_TH/sdk.js';
+        s.onerror = () => ok(null);
+        document.head.appendChild(s);
+        setTimeout(() => ok(window.FB || null), 15000);
+      });
+      return fbReady;
+    }
+
+    function nwCard(it, i) {
+      const [kind, title, url, src, t, img] = it;
+      const fb = kind === 'fb', play = fb && fbEmbeddable(url), fresh = Date.now() / 1000 - t < 3600;
+      const name = fb ? fbName(src) : (src || 'ข่าว');
+      const media = img ? '<span class="nc-media"><img src="' + esc(img) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></span>'
+        : play ? '<span class="nc-media nc-fb"><span class="nc-play" aria-hidden="true">▶</span>ดูรูป/วิดีโอ</span>' : '';
+      return '<a class="nc' + (fb ? ' fb' : '') + (media ? '' : ' plain') + '" href="' + esc(url) + '" target="_blank" rel="noopener" data-i="' + i + '"' +
+        (play ? ' data-play="1"' : '') + '>' + media +
+        '<span class="nc-body"><span class="nc-meta"><span class="nc-src">' + (fb ? '<i class="nc-f">f</i>' : '📰 ') + esc(name) + '</span>' +
+        '<time title="' + nwDate(t) + '">' + nwAgo(t) + '</time>' + (fresh ? '<span class="nc-new">ใหม่</span>' : '') + '</span>' +
+        '<span class="nc-title">' + esc(title) + '</span>' +
+        (fb && !play ? '<span class="nc-link">เปิดใน Facebook ↗</span>' : '') + '</span></a>';
+    }
+    function nwCurrentRows() {
+      if (nwTab === 'page') { const s = $('fbSel').value; return (fbPosts[s] || []).map(r => ['fb', r[0], r[1], s, r[2], '', '']); }
+      if (nwTab === 'fb') return nwItems.filter(r => r[0] === 'fb');
+      if (nwTab === 'news') return nwItems.filter(r => r[0] !== 'fb');
+      return nwItems;
+    }
+    function nwRender() {
+      nwRows = nwCurrentRows();
+      let html = '', grp = '';
+      nwRows.slice(0, nwShown).forEach((r, i) => {
+        const g = nwGroup(r[4]);
+        if (g !== grp) { html += (grp ? '</div>' : '') + '<h3 class="nwgrp">' + g + '</h3><div class="ncgrid">'; grp = g; }
+        html += nwCard(r, i);
+      });
+      $('nwFeed').innerHTML = html ? html + '</div>' : '<p class="meta">' + (nwTab === 'page' ? 'ยังไม่พบโพสต์ล่าสุดของเพจนี้ — <a href="https://www.facebook.com/' +
+        esc($('fbSel').value) + '" target="_blank" rel="noopener">เปิดเพจใน Facebook ↗</a>' : 'ยังไม่พบข่าวน้ำท่วมในช่วง 3 วันที่ผ่านมา') + '</p>';
+      const left = nwRows.length - nwShown;
+      $('nwMore').hidden = left <= 0;
+      $('nwMore').textContent = 'ดูเพิ่ม (อีก ' + left + ' รายการ)';
+    }
+    function nwSummary(d) {
+      const hour = nwItems.filter(r => Date.now() / 1000 - r[4] < 3600).length;
+      const fbN = nwItems.filter(r => r[0] === 'fb').length;
+      const at = d.fetched_at ? new Date(d.fetched_at) : new Date();
+      $('nwSum').innerHTML = 'อัปเดต ' + nwPad(at.getHours()) + ':' + nwPad(at.getMinutes()) + ' น. · ' +
+        (hour ? '<b>ข่าวใหม่ใน 1 ชม. ' + hour + ' รายการ</b> · ' : '') + 'ทั้งหมด ' + nwItems.length + ' รายการ (Facebook ' + fbN + ')' +
+        (d.stale ? ' · บางแหล่งไม่ตอบสนอง แสดงข้อมูลล่าสุดที่มี' : '');
+    }
+
+    // Facebook post popup: Facebook's player, sized to the screen; text + link stay if Facebook is blocked
+    function openFbPost(r) {
+      const [, title, url, src, t] = r, video = /\/(videos|reel|watch)\b/.test(url);
+      const box = document.createElement('div');
+      box.className = 'lightbox';
+      box.innerHTML = '<div class="lb-fb" role="dialog" aria-modal="true" aria-label="โพสต์ Facebook">' +
+        '<div class="lb-fbhead"><b>' + esc(fbName(src)) + '</b> · ' + nwDate(t) + '</div><div class="lb-fbbody">' +
+        '<p class="meta">กำลังโหลดรูป/วิดีโอจาก Facebook…</p><p>' + esc(title) + '</p></div>' +
+        '<a class="lb-fbopen" href="' + esc(url) + '" target="_blank" rel="noopener">เปิดใน Facebook ↗</a></div>' +
+        '<button type="button" class="lb-close" aria-label="ปิด">×</button>';
+      document.body.appendChild(box);
+      document.body.style.overflow = 'hidden';
+      const close = () => { box.remove(); document.body.style.overflow = ''; document.removeEventListener('keydown', onKey); };
+      const onKey = e => { if (e.key === 'Escape') close(); };
+      box.addEventListener('click', e => { if (e.target === box) close(); });
+      box.querySelector('.lb-close').onclick = close;
+      document.addEventListener('keydown', onKey);
+      box.querySelector('.lb-close').focus();
+      fbSdk().then(FBx => {
+        const body = box.querySelector('.lb-fbbody');
+        if (!FBx || !box.isConnected) { body.firstChild.textContent = 'เบราว์เซอร์บล็อกเนื้อหาจาก Facebook — กด "เปิดใน Facebook" ด้านล่าง'; return; }
+        const h = document.createElement('div');
+        h.className = video ? 'fb-video' : 'fb-post';
+        h.dataset.href = url;
+        h.dataset.width = Math.min(500, body.clientWidth);
+        h.dataset.showText = 'true';
+        body.prepend(h);
+        FBx.XFBML.parse(body, () => { if (h.querySelector('iframe')) body.querySelectorAll(':scope > p').forEach(n => n.remove()); });
+      });
+    }
+    $('nwFeed').onclick = e => {
+      const a = e.target.closest('a.nc');
+      if (!a || !a.dataset.play) return;   // news / unresolved posts open in a new tab
+      e.preventDefault();
+      openFbPost(nwRows[Number(a.dataset.i)]);
+    };
+    $('nwMore').onclick = () => { nwShown += NW_STEP; nwRender(); };
+
+    function nwSetTab(k) {
+      nwTab = k;
+      nwShown = NW_STEP;
+      $('nwTabs').querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', b.dataset.k === k));
+      $('fbSel').hidden = k !== 'page';
+      try { localStorage.setItem('nwTab', k); } catch (_) { }
+      nwRender();
+    }
+    $('nwTabs').onclick = e => { const b = e.target.closest('button'); if (b) nwSetTab(b.dataset.k); };
+    $('fbSel').onchange = () => { try { localStorage.setItem('fbPage', $('fbSel').value); } catch (_) { } nwShown = NW_STEP; nwRender(); };
+    function fbBuildSelect() {
+      if ($('fbSel').options.length || !fbPages.length) return;
+      let html = '', grp = '';
+      fbPages.forEach(([g, slug, name]) => {
+        if (g !== grp) { html += (grp ? '</optgroup>' : '') + '<optgroup label="' + esc(g) + '">'; grp = g; }
+        html += '<option value="' + esc(slug) + '">' + esc(name) + ' (' + (fbPosts[slug] || []).length + ' โพสต์)</option>';
+      });
+      $('fbSel').innerHTML = html + '</optgroup>';
+      try {
+        const s = localStorage.getItem('fbPage'); if (s && fbPages.some(p => p[1] === s)) $('fbSel').value = s;
+        const k = localStorage.getItem('nwTab'); if (k !== null && $('nwTabs').querySelector('[data-k="' + k + '"]')) { nwSetTab(k); return; }
+      } catch (_) { }
+    }
+
+    async function loadNews() {
+      if (!nwStarted) return;
+      try {
+        const r = await fetch('api/news.php', { cache: 'no-store' });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || r.status);
+        nwItems = d.items || [];
+        fbPages = d.page_list || fbPages;
+        fbPosts = d.pages || {};
+        nwSummary(d);
+        fbBuildSelect();
+        nwRender();
+      } catch (err) {
+        if (!nwItems.length) $('nwSum').textContent = 'โหลดข่าวไม่สำเร็จ: ' + err.message;
+      }
+    }
+    function nwStart() { if (!nwStarted) { nwStarted = true; loadNews(); } }
+    if (window.IntersectionObserver) {
+      const io = new IntersectionObserver(es => { if (es[0].isIntersecting) { io.disconnect(); nwStart(); } }, { rootMargin: '600px' });
+      io.observe($('news'));
+    } else nwStart();
+    every(NW_MS, loadNews);
 
     // ---------- ThaiWater (สสน.) telemetry ----------
     const twCharts = {};

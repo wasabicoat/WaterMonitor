@@ -30,7 +30,7 @@ jobs:
             mkdir -p cache
             git checkout gh-pages -- cache/ api/ 2>/dev/null || true
             if [ -d api ]; then
-              for f in basin.json thaiwater.json pakkret.json rangsit.json cctv.json mapdata.json; do
+              for f in basin.json thaiwater.json pakkret.json rangsit.json cctv.json mapdata.json news.json; do
                 [ -f "api/$f" ] && [ ! -f "cache/$f" ] && cp "api/$f" "cache/$f" || true
               done
             fi

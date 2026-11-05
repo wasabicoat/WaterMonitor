@@ -777,6 +777,43 @@ figure.cam.err::after {
   }
 }
 
+/* Map on the left, camera list beside it (desktop); stacked on narrow screens */
+.acsplit { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+
+.acright .acmsg { margin: 0 0 6px; }
+
+@media (min-width: 1000px) {
+  .acsplit { grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); align-items: stretch; }
+  .acsplit #acMap { height: 600px; }
+  /* The camera panel is exactly as tall as the map column; its list scrolls inside */
+  .acright { position: relative; min-height: 400px; }
+  .acbox { position: absolute; inset: 0; display: flex; flex-direction: column; }
+  .acbox .camgrid {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    align-content: start;
+    padding-right: 4px;
+  }
+}
+
+.ac-locate a { font-size: 16px; line-height: 30px; text-align: center; cursor: pointer; }
+.ac-locate a.busy, .mebtn.busy { animation: acpulse 1s infinite; }
+.mebtn {
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: #2563eb;
+  border: 0;
+  border-radius: 99px;
+  padding: 6px 14px;
+  min-height: 36px;
+  cursor: pointer;
+}
+@keyframes acpulse { 50% { opacity: .35; } }
+
 /* Legend dots: same size/colour/white ring as the map's circle markers (radius 10 / 6 / 4) */
 .mapkey {
   display: flex;
@@ -944,3 +981,155 @@ ul.linklist small {
 .bigbtn:hover {
   filter: brightness(1.1);
 }
+
+/* ---------- Flood news: one feed of compact cards, grouped by time ---------- */
+.nwtop { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.nwtabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.nwtabs button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  padding: 6px 14px;
+  min-height: 36px;
+  cursor: pointer;
+}
+
+.nwtabs button[aria-selected="true"] { background: var(--card); color: var(--accent); box-shadow: 0 1px 3px rgba(0, 0, 0, .15); }
+
+.nwtop select { font: inherit; padding: 6px 10px; min-height: 40px; border-radius: 8px; max-width: 100%; }
+
+.nwsum { margin: 10px 0 2px; }
+
+.nwgrp {
+  font-size: 1rem;
+  margin: 16px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ncgrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(min(270px, 100%), 1fr));
+}
+
+.ncgrid > * { min-width: 0; max-width: 100%; }
+
+.nc {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  text-decoration: none;
+  transition: box-shadow .15s, transform .15s;
+}
+
+.nc:hover, .nc:focus-visible { box-shadow: 0 4px 14px rgba(0, 0, 0, .14); transform: translateY(-1px); }
+
+.nc-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  aspect-ratio: 16 / 9;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.nc-media { width: 100%; }
+.nc-media img { width: 100%; max-width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.nc-fb { background: linear-gradient(135deg, #1877f2, #0a4fb0); color: #fff; font-weight: 600; aspect-ratio: 16 / 7; }
+
+.nc-play {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .25);
+  font-size: 1.1rem;
+}
+
+.nc-body { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 12px; }
+
+.nc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font-size: .85rem; color: var(--muted); }
+
+.nc-src { font-weight: 600; color: var(--text); }
+.nc.fb .nc-src { color: #1877f2; }
+
+.nc-f {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #1877f2;
+  color: #fff;
+  font: 700 11px/1 Arial, sans-serif;
+  font-style: normal;
+  vertical-align: -2px;
+}
+
+.nc-new { background: #dc2626; color: #fff; border-radius: 999px; padding: 0 8px; font-size: .75rem; font-weight: 600; }
+
+.nc-title {
+  font-weight: 600;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nc.plain .nc-title { -webkit-line-clamp: 5; }
+
+.nc-link { font-size: .85rem; color: var(--accent); }
+
+.nwmore {
+  display: block;
+  width: 100%;
+  margin: 14px 0 6px;
+  padding: 10px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* Facebook post popup */
+.lightbox .lb-fb {
+  width: min(540px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: var(--card);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.lb-fbhead { margin-bottom: 8px; }
+.lb-fbbody { min-height: 120px; }
+.lb-fbbody .fb-post, .lb-fbbody .fb-video { display: block; max-width: 100%; }
+.lb-fbopen { display: inline-block; margin-top: 10px; font-weight: 600; }
